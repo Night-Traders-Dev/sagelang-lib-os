@@ -7,7 +7,7 @@ proc parse(text):
     let lines = split(text, chr(10))
     for line in lines:
         let trimmed = strip(line)
-        if len(trimmed) == 0 or trimmed[0] == ": #":
+        if len(trimmed) == 0 or trimmed[0] == "#":
             continue
         let parts = split(trimmed, "=")
         if len(parts) == 2:
