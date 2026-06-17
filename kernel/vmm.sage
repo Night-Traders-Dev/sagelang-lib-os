@@ -1,4 +1,4 @@
-gc_disable()
+# gc_disable()
 
 # vmm.sage — Virtual Memory Manager
 # x86-64 4-level paging: PML4 -> PDPT -> PD -> PT -> Page

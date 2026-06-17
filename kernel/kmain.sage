@@ -1,4 +1,4 @@
-gc_disable()
+# gc_disable()
 
 # kmain.sage — Kernel entry point for SageOS
 # Initializes all subsystems and provides panic/halt primitives.
@@ -149,4 +149,4 @@ proc kmain(boot_info):
     return kernel
 
 # Entry point call
-kmain(nil)
+# kmain(nil)

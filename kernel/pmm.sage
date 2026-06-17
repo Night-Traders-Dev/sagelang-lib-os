@@ -1,4 +1,4 @@
-gc_disable()
+# gc_disable()
 
 # pmm.sage — Physical Memory Manager
 # Bitmap-based allocator, 1 bit per 4KB page.

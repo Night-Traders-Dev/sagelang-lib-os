@@ -1,4 +1,4 @@
-gc_disable()
+# gc_disable()
 
 # keyboard.sage — PS/2 keyboard driver
 # Handles scancodes from port 0x60, US QWERTY layout.

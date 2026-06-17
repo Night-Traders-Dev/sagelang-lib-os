@@ -1,4 +1,4 @@
-gc_disable()
+# gc_disable()
 
 # syscall.sage — System call dispatch table
 # Handles int 0x80 / SYSCALL instruction dispatch.
