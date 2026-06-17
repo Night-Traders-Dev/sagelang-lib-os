@@ -29,4 +29,3 @@ proc emit_enter_long_mode(pml4_addr, gdt64_label, cs_sel, target):
     # 6. Far jump to 64-bit target
     asm = asm + TAB + "ljmp $" + str(cs_sel) + ", $" + target + NL
     return asm
-end

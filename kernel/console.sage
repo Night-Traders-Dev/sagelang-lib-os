@@ -47,12 +47,10 @@ let fb_ready = false
 # ----- Helper: make VGA color attribute byte -----
 proc make_color(fg, bg):
     return (bg * 16) + fg
-end
 
 # ----- Helper: buffer index from x, y -----
 proc vga_index(x, y):
     return y * VGA_WIDTH + x
-end
 
 # ----- Initialize VGA text mode -----
 proc init_vga():
@@ -69,15 +67,12 @@ proc init_vga():
         cell["color"] = make_color(current_fg, current_bg)
         append(vga_buffer, cell)
         i = i + 1
-    end
     vga_ready = true
-end
 
 # ----- Set foreground and background color -----
 proc set_color(fg, bg):
     current_fg = fg
     current_bg = bg
-end
 
 # ----- Get cursor position -----
 proc get_cursor():
@@ -85,25 +80,19 @@ proc get_cursor():
     pos["x"] = cursor_x
     pos["y"] = cursor_y
     return pos
-end
 
 # ----- Set cursor position -----
 proc set_cursor(x, y):
     if x < 0:
         x = 0
-    end
     if x >= VGA_WIDTH:
         x = VGA_WIDTH - 1
-    end
     if y < 0:
         y = 0
-    end
     if y >= VGA_HEIGHT:
         y = VGA_HEIGHT - 1
-    end
     cursor_x = x
     cursor_y = y
-end
 
 # ----- Scroll the screen up by one line -----
 proc scroll_up():
@@ -117,9 +106,7 @@ proc scroll_up():
             vga_buffer[dst]["char"] = vga_buffer[src]["char"]
             vga_buffer[dst]["color"] = vga_buffer[src]["color"]
             x = x + 1
-        end
         y = y + 1
-    end
     # Clear the last row
     let x2 = 0
     while x2 < VGA_WIDTH:
@@ -127,8 +114,6 @@ proc scroll_up():
         vga_buffer[idx]["char"] = " "
         vga_buffer[idx]["color"] = make_color(current_fg, current_bg)
         x2 = x2 + 1
-    end
-end
 
 # ----- Advance cursor, scrolling if needed -----
 proc advance_cursor():
@@ -136,12 +121,9 @@ proc advance_cursor():
     if cursor_x >= VGA_WIDTH:
         cursor_x = 0
         cursor_y = cursor_y + 1
-    end
     if cursor_y >= VGA_HEIGHT:
         scroll_up()
         cursor_y = VGA_HEIGHT - 1
-    end
-end
 
 # ----- Handle newline -----
 proc newline():
@@ -150,15 +132,12 @@ proc newline():
     if cursor_y >= VGA_HEIGHT:
         scroll_up()
         cursor_y = VGA_HEIGHT - 1
-    end
-end
 
 # ----- Put a single character at cursor position -----
 proc putchar(ch, color):
     if ch == chr(10):
         newline()
         return
-    end
     if ch == chr(9):
         # Tab: advance to next 8-column boundary
         let spaces = 8 - (cursor_x % 8)
@@ -166,14 +145,11 @@ proc putchar(ch, color):
         while s < spaces:
             putchar(" ", color)
             s = s + 1
-        end
         return
-    end
     let idx = vga_index(cursor_x, cursor_y)
     vga_buffer[idx]["char"] = ch
     vga_buffer[idx]["color"] = color
     advance_cursor()
-end
 
 # ----- Print a string at current cursor with current colors -----
 proc print_str(text):
@@ -184,14 +160,11 @@ proc print_str(text):
         let ch = text[i]
         putchar(ch, color)
         i = i + 1
-    end
-end
 
 # ----- Print a string followed by newline -----
 proc print_line(text):
     print_str(text)
     newline()
-end
 
 # ----- Clear the entire screen with a background color -----
 proc clear_screen(color):
@@ -202,10 +175,8 @@ proc clear_screen(color):
         vga_buffer[i]["char"] = " "
         vga_buffer[i]["color"] = attr
         i = i + 1
-    end
     cursor_x = 0
     cursor_y = 0
-end
 
 # ----- Framebuffer initialization -----
 proc init_framebuffer(addr, width, height, pitch, bpp):
@@ -220,36 +191,27 @@ proc init_framebuffer(addr, width, height, pitch, bpp):
     while i < total_pixels:
         append(fb_buffer, 0)
         i = i + 1
-    end
     fb_ready = true
-end
 
 # ----- Put a pixel in the framebuffer -----
 proc fb_putpixel(x, y, color):
     if fb_ready == false:
         return
-    end
     if x < 0:
         return
-    end
     if y < 0:
         return
-    end
     if x >= fb_width:
         return
-    end
     if y >= fb_height:
         return
-    end
     let idx = y * fb_width + x
     fb_buffer[idx] = color
-end
 
 # ----- Fill a rectangle in the framebuffer -----
 proc fb_fill_rect(x, y, w, h, color):
     if fb_ready == false:
         return
-    end
     let row = y
     while row < y + h:
         if row >= 0:
@@ -260,15 +222,8 @@ proc fb_fill_rect(x, y, w, h, color):
                         if col < fb_width:
                             let idx = row * fb_width + col
                             fb_buffer[idx] = color
-                        end
-                    end
                     col = col + 1
-                end
-            end
-        end
         row = row + 1
-    end
-end
 
 # ================================================================
 # Architecture-neutral framebuffer text console
@@ -283,133 +238,107 @@ proc _font_get_glyph(ch):
     let code = ord(ch)
     if code < 32 or code > 126:
         code = 32
-    end
     # Minimal built-in bitmaps for printable ASCII
     # We define a small subset inline; everything else gets a filled block
     let glyph = [0, 0, 0, 0, 0, 0, 0, 0]
     if code == 32:
         # space
         return glyph
-    end
     if code == 33:
         # !
         glyph = [24, 24, 24, 24, 24, 0, 24, 0]
         return glyph
-    end
     if code == 48:
         # 0
         glyph = [60, 102, 110, 126, 118, 102, 60, 0]
         return glyph
-    end
     if code == 49:
         # 1
         glyph = [24, 56, 24, 24, 24, 24, 126, 0]
         return glyph
-    end
     if code == 50:
         # 2
         glyph = [60, 102, 6, 12, 24, 48, 126, 0]
         return glyph
-    end
     if code == 51:
         # 3
         glyph = [60, 102, 6, 28, 6, 102, 60, 0]
         return glyph
-    end
     if code == 52:
         # 4
         glyph = [12, 28, 44, 76, 126, 12, 12, 0]
         return glyph
-    end
     if code == 53:
         # 5
         glyph = [126, 96, 124, 6, 6, 102, 60, 0]
         return glyph
-    end
     if code == 54:
         # 6
         glyph = [60, 102, 96, 124, 102, 102, 60, 0]
         return glyph
-    end
     if code == 55:
         # 7
         glyph = [126, 6, 12, 24, 48, 48, 48, 0]
         return glyph
-    end
     if code == 56:
         # 8
         glyph = [60, 102, 102, 60, 102, 102, 60, 0]
         return glyph
-    end
     if code == 57:
         # 9
         glyph = [60, 102, 102, 62, 6, 102, 60, 0]
         return glyph
-    end
     if code >= 65 and code <= 90:
         # Uppercase A-Z: simple block representation
         glyph = [126, 102, 102, 126, 102, 102, 102, 0]
         return glyph
-    end
     if code >= 97 and code <= 122:
         # Lowercase a-z: smaller block
         glyph = [0, 0, 60, 6, 62, 102, 62, 0]
         return glyph
-    end
     if code == 46:
         # .
         glyph = [0, 0, 0, 0, 0, 24, 24, 0]
         return glyph
-    end
     if code == 44:
         # ,
         glyph = [0, 0, 0, 0, 0, 24, 24, 48]
         return glyph
-    end
     if code == 58:
         # :
         glyph = [0, 24, 24, 0, 24, 24, 0, 0]
         return glyph
-    end
     if code == 45:
         # -
         glyph = [0, 0, 0, 126, 0, 0, 0, 0]
         return glyph
-    end
     if code == 95:
         # _
         glyph = [0, 0, 0, 0, 0, 0, 0, 255]
         return glyph
-    end
     if code == 61:
         # =
         glyph = [0, 0, 126, 0, 126, 0, 0, 0]
         return glyph
-    end
     if code == 47:
         # /
         glyph = [2, 4, 8, 16, 32, 64, 128, 0]
         return glyph
-    end
     if code == 42:
         # *
         glyph = [0, 102, 60, 255, 60, 102, 0, 0]
         return glyph
-    end
     if code == 40:
         # (
         glyph = [12, 24, 48, 48, 48, 24, 12, 0]
         return glyph
-    end
     if code == 41:
         # )
         glyph = [48, 24, 12, 12, 12, 24, 48, 0]
         return glyph
-    end
     # Default: filled block for unrecognized characters
     glyph = [255, 129, 129, 129, 129, 129, 255, 0]
     return glyph
-end
 
 # Initialize a framebuffer text console (architecture-neutral)
 # Returns a console state dict used by fb_putchar / fb_puts
@@ -434,16 +363,13 @@ proc framebuffer_console_init(fb_address, width, height, pitch):
     while i < total_pixels:
         push(pixels, 0)
         i = i + 1
-    end
     con["pixels"] = pixels
     return con
-end
 
 # Set the text colors for the framebuffer console
 proc fb_console_set_color(con, fg, bg):
     con["fg_color"] = fg
     con["bg_color"] = bg
-end
 
 # Scroll the framebuffer console up by one text row (8 pixels)
 proc _fb_scroll_up(con):
@@ -460,9 +386,7 @@ proc _fb_scroll_up(con):
             let dst_idx = (y - char_h) * w + x
             pixels[dst_idx] = pixels[src_idx]
             x = x + 1
-        end
         y = y + 1
-    end
     # Clear the bottom char_h rows
     let clear_y = h - char_h
     while clear_y < h:
@@ -471,10 +395,7 @@ proc _fb_scroll_up(con):
             let idx = clear_y * w + x
             pixels[idx] = con["bg_color"]
             x = x + 1
-        end
         clear_y = clear_y + 1
-    end
-end
 
 # Render a single character at the current cursor position
 proc fb_putchar(con, ch):
@@ -493,14 +414,11 @@ proc fb_putchar(con, ch):
         if con["cy"] >= rows:
             _fb_scroll_up(con)
             con["cy"] = rows - 1
-        end
         return
-    end
     # Handle carriage return
     if ch == chr(13):
         con["cx"] = 0
         return
-    end
     # Handle tab
     if ch == chr(9):
         let spaces = 8 - (con["cx"] % 8)
@@ -508,9 +426,7 @@ proc fb_putchar(con, ch):
         while s < spaces:
             fb_putchar(con, " ")
             s = s + 1
-        end
         return
-    end
     # Get the 8x8 glyph bitmap
     let glyph = _font_get_glyph(ch)
     # Draw the glyph pixel by pixel
@@ -531,12 +447,8 @@ proc fb_putchar(con, ch):
                     pixels[idx] = fg
                 else:
                     pixels[idx] = bg
-                end
-            end
             col = col + 1
-        end
         row = row + 1
-    end
     # Advance cursor
     con["cx"] = con["cx"] + 1
     if con["cx"] >= cols:
@@ -545,9 +457,6 @@ proc fb_putchar(con, ch):
         if con["cy"] >= rows:
             _fb_scroll_up(con)
             con["cy"] = rows - 1
-        end
-    end
-end
 
 # Render a string on the framebuffer console
 proc fb_puts(con, text):
@@ -556,8 +465,6 @@ proc fb_puts(con, text):
     while i < tlen:
         fb_putchar(con, text[i])
         i = i + 1
-    end
-end
 
 # ================================================================
 # Hardware mode flag and bare-metal code generation
@@ -571,8 +478,6 @@ let hardware_mode = "simulated"
 proc set_hardware_mode(mode):
     if mode == "simulated" or mode == "hardware":
         hardware_mode = mode
-    end
-end
 
 # ----- Write a character+color to the simulated VGA buffer -----
 # Sage-callable proc that computes the VGA buffer offset and stores
@@ -580,17 +485,13 @@ end
 proc vga_write_char(x, y, ch, color):
     if vga_ready == false:
         return
-    end
     if x < 0 or x >= VGA_WIDTH:
         return
-    end
     if y < 0 or y >= VGA_HEIGHT:
         return
-    end
     let offset = y * VGA_WIDTH + x
     vga_buffer[offset]["char"] = ch
     vga_buffer[offset]["color"] = color
-end
 
 # ----- Generate x86_64 assembly: clear VGA screen -----
 # Emits assembly that fills VGA memory at 0xB8000 through 0xB8FA0
@@ -619,7 +520,6 @@ proc emit_console_init_asm():
     append(lines, "cursor_y_hw: .long 0")
     append(lines, ".section .text")
     return lines
-end
 
 # ----- Generate x86_64 assembly: write char+attr to VGA memory -----
 # Emits assembly for a procedure that takes:
@@ -692,7 +592,6 @@ proc emit_vga_putchar_asm():
     append(lines, "    popq %rbx")
     append(lines, "    ret")
     return lines
-end
 
 # ----- Generate x86_64 assembly: output char to COM1 serial port -----
 # Emits assembly for a serial console fallback. Takes character in %dil.
@@ -721,4 +620,3 @@ proc emit_serial_console_asm():
     append(lines, "    popq %rbx")
     append(lines, "    ret")
     return lines
-end

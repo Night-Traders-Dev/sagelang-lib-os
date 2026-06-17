@@ -61,27 +61,22 @@ proc create_driver(name, driver_type):
     drv["probe"] = nil
     drv["remove"] = nil
     return drv
-end
 
 proc set_license(drv, license):
     drv["license"] = license
     return drv
-end
 
 proc set_author(drv, author):
     drv["author"] = author
     return drv
-end
 
 proc set_description(drv, desc):
     drv["description"] = desc
     return drv
-end
 
 proc add_fops(drv, flags):
     drv["fops"] = drv["fops"] + flags
     return drv
-end
 
 # ========== Module parameter ==========
 
@@ -93,20 +88,17 @@ proc add_param(drv, name, param_type, default_val, desc):
     p["description"] = desc
     append(drv["params"], p)
     return drv
-end
 
 # ========== IRQ / IO region ==========
 
 proc set_irq(drv, irq_num):
     drv["irq"] = irq_num
     return drv
-end
 
 proc set_io_region(drv, base, size):
     drv["io_base"] = base
     drv["io_size"] = size
     return drv
-end
 
 # ========== Char device operations ==========
 
@@ -116,7 +108,6 @@ proc add_op(drv, op_name, body_lines):
     op["body"] = body_lines
     append(drv["ops"], op)
     return drv
-end
 
 # ========== C code generation ==========
 
@@ -134,7 +125,6 @@ proc emit_includes():
     code = code + "#include <linux/ioctl.h>" + nl
     code = code + "#include <linux/poll.h>" + nl
     return code
-end
 
 proc emit_module_info(drv):
     let nl = chr(10)
@@ -143,13 +133,10 @@ proc emit_module_info(drv):
     code = code + "MODULE_LICENSE(" + q + drv["license"] + q + ");" + nl
     if drv["author"] != "":
         code = code + "MODULE_AUTHOR(" + q + drv["author"] + q + ");" + nl
-    end
     if drv["description"] != "":
         code = code + "MODULE_DESCRIPTION(" + q + drv["description"] + q + ");" + nl
-    end
     code = code + "MODULE_VERSION(" + q + drv["version"] + q + ");" + nl
     return code
-end
 
 proc emit_params(drv):
     let nl = chr(10)
@@ -161,24 +148,18 @@ proc emit_params(drv):
         if p["type"] == "int":
             code = code + "static int " + p["name"] + " = " + str(p["default"]) + ";" + nl
             code = code + "module_param(" + p["name"] + ", int, 0644);" + nl
-        end
         if p["type"] == "string":
             code = code + "static char *" + p["name"] + " = " + q + str(p["default"]) + q + ";" + nl
             code = code + "module_param(" + p["name"] + ", charp, 0644);" + nl
-        end
         if p["type"] == "bool":
             let bval = "false"
             if p["default"]:
                 bval = "true"
-            end
             code = code + "static bool " + p["name"] + " = " + bval + ";" + nl
             code = code + "module_param(" + p["name"] + ", bool, 0644);" + nl
-        end
         code = code + "MODULE_PARM_DESC(" + p["name"] + ", " + q + p["description"] + q + ");" + nl
         i = i + 1
-    end
     return code
-end
 
 proc emit_char_device(drv):
     let nl = chr(10)
@@ -224,7 +205,6 @@ proc emit_char_device(drv):
     code = code + "};" + nl + nl
 
     return code
-end
 
 proc emit_init_exit(drv):
     let nl = chr(10)
@@ -247,7 +227,6 @@ proc emit_init_exit(drv):
         code = code + "    if (ret < 0) { unregister_chrdev_region(" + name + "_dev, " + str(drv["minor_count"]) + "); return ret; }" + nl
         code = code + "    " + name + "_class = class_create(" + q + name + q + ");" + nl
         code = code + "    device_create(" + name + "_class, NULL, " + name + "_dev, NULL, " + q + name + q + ");" + nl
-    end
     code = code + "    return 0;" + nl
     code = code + "}" + nl + nl
 
@@ -259,14 +238,12 @@ proc emit_init_exit(drv):
         code = code + "    class_destroy(" + name + "_class);" + nl
         code = code + "    cdev_del(&" + name + "_cdev);" + nl
         code = code + "    unregister_chrdev_region(" + name + "_dev, " + str(drv["minor_count"]) + ");" + nl
-    end
     code = code + "}" + nl + nl
 
     code = code + "module_init(" + name + "_init);" + nl
     code = code + "module_exit(" + name + "_exit);" + nl
 
     return code
-end
 
 # ========== Full driver codegen ==========
 
@@ -280,10 +257,8 @@ proc generate_driver_c(drv):
     code = code + chr(10)
     if drv["type"] == DRIVER_CHAR:
         code = code + emit_char_device(drv)
-    end
     code = code + emit_init_exit(drv)
     return code
-end
 
 # ========== Kbuild Makefile generation ==========
 
@@ -300,7 +275,6 @@ proc generate_kbuild(drv):
     code = code + "clean:" + nl
     code = code + chr(9) + "$(MAKE) -C $(KDIR) M=$(PWD) clean" + nl
     return code
-end
 
 # ========== Convenience builders ==========
 
@@ -310,4 +284,3 @@ proc simple_char_driver(name, author, desc):
     drv = set_description(drv, desc)
     drv = add_fops(drv, FOPS_READ + FOPS_WRITE + FOPS_OPEN + FOPS_RELEASE)
     return drv
-end

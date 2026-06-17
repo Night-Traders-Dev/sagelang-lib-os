@@ -21,11 +21,10 @@ enum ProcStatus:
     Terminated
 
 let KERNEL_NAME = "SageOS"
-let KERNEL_VERSION = "3.8.0"
+let KERNEL_VERSION = "3.8.1"
 
 proc kernel_version():
     return KERNEL_NAME + " " + KERNEL_VERSION
-end
 
 proc create_kernel(name, version):
     let cfg = {}
@@ -39,7 +38,6 @@ proc create_kernel(name, version):
     cfg["syscalls_ready"] = false
     cfg["vmm_ready"] = false
     return cfg
-end
 
 proc panic(msg):
     let nl = chr(10)
@@ -54,7 +52,6 @@ proc panic(msg):
     console.print_line("")
     console.print_line(line)
     halt()
-end
 
 proc halt():
     # Halt the CPU. In compiled bare-metal mode, this emits a HLT loop.
@@ -63,13 +60,10 @@ proc halt():
         # On real hardware, the compiler emits: cli; hlt; jmp halt
         # In interpreted mode, this is a safe infinite loop.
         let dummy = 0
-    end
-end
 
 # Generate x86_64 assembly for a proper hardware halt loop
 proc emit_halt_asm():
     return ".Lhalt:" + chr(10) + "    cli" + chr(10) + "    hlt" + chr(10) + "    jmp .Lhalt" + chr(10)
-end
 
 proc init_console(boot_info):
     console.init_vga()
@@ -81,10 +75,7 @@ proc init_console(boot_info):
         if dict_has(boot_info, "framebuffer"):
             let fb = boot_info["framebuffer"]
             console.init_framebuffer(fb["addr"], fb["width"], fb["height"], fb["pitch"], fb["bpp"])
-        end
-    end
     return true
-end
 
 proc init_memory(boot_info):
     let mem_map = nil
@@ -92,43 +83,34 @@ proc init_memory(boot_info):
     if boot_info != nil:
         if dict_has(boot_info, "memory_map"):
             mem_map = boot_info["memory_map"]
-        end
         if dict_has(boot_info, "arch"):
             arch = boot_info["arch"]
-        end
-    end
     if mem_map == nil:
         mem_map = []
-    end
     pmm.init(mem_map)
     vmm.vmm_init(arch)
     let total_mb = pmm.total_memory() / 1048576
     console.print_line("  Memory: " + str(total_mb) + " MB total")
     return true
-end
 
 proc init_interrupts():
     syscall.init()
     console.print_line("  Interrupts: IDT installed")
     return true
-end
 
 proc init_keyboard():
     keyboard.init()
     console.print_line("  Keyboard: PS/2 driver ready")
     return true
-end
 
 proc init_timer(freq_hz):
     timer.init(freq_hz)
     console.print_line("  Timer: PIT at " + str(freq_hz) + " Hz")
     return true
-end
 
 proc kmain(boot_info):
     if boot_info == nil:
         boot_info = {}
-    end
     let kernel = create_kernel(KERNEL_NAME, KERNEL_VERSION)
 
     # Phase 1: Console (needed for all output)
@@ -165,7 +147,6 @@ proc kmain(boot_info):
     shell.sh_main()
 
     return kernel
-end
 
 # Entry point call
 kmain(nil)

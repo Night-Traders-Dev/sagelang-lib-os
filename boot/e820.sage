@@ -11,7 +11,6 @@ let TYPE_BAD         = 5
 proc collect():
     # In a real environment this would be populated by BIOS call
     return []
-end
 
 ## Collect the memory map into an array of entries.
 ## This generates the assembly to be called from a bootloader.
@@ -34,7 +33,6 @@ proc collect_asm(dest_label):
     asm = asm + emit_label(".Le820_done")
     # ...
     return asm
-end
 
 ## Filter usable regions from a collected memory map
 proc filter_usable(mmap):
@@ -42,10 +40,7 @@ proc filter_usable(mmap):
     for entry in mmap:
         if entry["type"] == TYPE_USABLE:
             push(usable, entry)
-        end
-    end
     return usable
-end
 
 ## Find the highest usable physical address
 proc highest_usable(mmap):
@@ -55,11 +50,7 @@ proc highest_usable(mmap):
             let end_addr = entry["base"] + entry["len"]
             if end_addr > max_addr:
                 max_addr = end_addr
-            end
-        end
-    end
     return max_addr
-end
 
 ## Normalize the map: sort, merge overlapping regions, fill gaps with RESERVED
 proc to_regions(mmap):
@@ -71,13 +62,10 @@ proc to_regions(mmap):
     # Logic to merge and fill gaps
     # ...
     return regions
-end
 
 proc sort_mmap(mmap):
     # Placeholder for sorting logic
     return mmap
-end
 
 proc emit_label(name):
     return name + ":" + chr(10)
-end

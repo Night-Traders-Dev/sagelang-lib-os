@@ -93,12 +93,10 @@ proc create_nlmsg(msg_type, flags):
     msg["attrs"] = []
     msg["payload"] = []
     return msg
-end
 
 proc nlmsg_set_seq(msg, seq):
     msg["seq"] = seq
     return msg
-end
 
 proc nlmsg_add_attr(msg, attr_type, data):
     let attr = {}
@@ -106,7 +104,6 @@ proc nlmsg_add_attr(msg, attr_type, data):
     attr["data"] = data
     append(msg["attrs"], attr)
     return msg
-end
 
 proc nlmsg_add_attr_u32(msg, attr_type, val):
     let attr = {}
@@ -115,7 +112,6 @@ proc nlmsg_add_attr_u32(msg, attr_type, val):
     attr["value"] = val
     append(msg["attrs"], attr)
     return msg
-end
 
 proc nlmsg_add_attr_str(msg, attr_type, val):
     let attr = {}
@@ -124,7 +120,6 @@ proc nlmsg_add_attr_str(msg, attr_type, val):
     attr["value"] = val
     append(msg["attrs"], attr)
     return msg
-end
 
 # ========== Message serialization ==========
 
@@ -132,7 +127,6 @@ proc nlmsg_attr_len(attr):
     # NLA header is 4 bytes (2 len + 2 type)
     if attr["format"] == "u32":
         return 8
-    end
     if attr["format"] == "string":
         # 4 + string len + 1 (null terminator), padded to 4
         let slen = len(attr["value"]) + 1
@@ -140,11 +134,8 @@ proc nlmsg_attr_len(attr):
         # Align to 4
         while total % 4 != 0:
             total = total + 1
-        end
         return total
-    end
     return 4
-end
 
 proc nlmsg_total_len(msg):
     let total = NLMSG_HDR_LEN
@@ -152,19 +143,14 @@ proc nlmsg_total_len(msg):
     while i < len(msg["attrs"]):
         total = total + nlmsg_attr_len(msg["attrs"][i])
         i = i + 1
-    end
     # Add ifinfomsg (16 bytes) for link messages
     if msg["type"] == RTM_GETLINK:
         total = total + 16
-    end
     if msg["type"] == RTM_NEWLINK:
         total = total + 16
-    end
     if msg["type"] == RTM_GETADDR:
         total = total + 8
-    end
     return total
-end
 
 proc nlmsg_serialize(msg):
     let bytes = []
@@ -198,7 +184,6 @@ proc nlmsg_serialize(msg):
     append(bytes, (msg["pid"] / 16777216) % 256)
 
     return bytes
-end
 
 # ========== Message parser ==========
 
@@ -207,14 +192,12 @@ proc nlmsg_parse_header(bytes, offset):
     if len(bytes) < offset + NLMSG_HDR_LEN:
         hdr["error"] = "too short"
         return hdr
-    end
     hdr["len"] = bytes[offset] + bytes[offset + 1] * 256 + bytes[offset + 2] * 65536 + bytes[offset + 3] * 16777216
     hdr["type"] = bytes[offset + 4] + bytes[offset + 5] * 256
     hdr["flags"] = bytes[offset + 6] + bytes[offset + 7] * 256
     hdr["seq"] = bytes[offset + 8] + bytes[offset + 9] * 256 + bytes[offset + 10] * 65536 + bytes[offset + 11] * 16777216
     hdr["pid"] = bytes[offset + 12] + bytes[offset + 13] * 256 + bytes[offset + 14] * 65536 + bytes[offset + 15] * 16777216
     return hdr
-end
 
 # ========== Request builders ==========
 
@@ -222,19 +205,16 @@ proc build_getlink_request(seq):
     let msg = create_nlmsg(RTM_GETLINK, NLM_F_REQUEST + NLM_F_DUMP)
     msg = nlmsg_set_seq(msg, seq)
     return msg
-end
 
 proc build_getaddr_request(seq):
     let msg = create_nlmsg(RTM_GETADDR, NLM_F_REQUEST + NLM_F_DUMP)
     msg = nlmsg_set_seq(msg, seq)
     return msg
-end
 
 proc build_getroute_request(seq):
     let msg = create_nlmsg(RTM_GETROUTE, NLM_F_REQUEST + NLM_F_DUMP)
     msg = nlmsg_set_seq(msg, seq)
     return msg
-end
 
 # ========== Convenience: interface info ==========
 
@@ -249,11 +229,8 @@ proc interface_info(name, flags, mtu):
     let shifted = flags / 64
     if shifted % 2 == 1:
         iface["running"] = true
-    end
     iface["loopback"] = false
     let shifted_lb = flags / 8
     if shifted_lb % 2 == 1:
         iface["loopback"] = true
-    end
     return iface
-end

@@ -52,22 +52,17 @@ let CRC32_TABLE = [
 
 proc crc32_init():
     return 4294967295 # 0xFFFFFFFF
-end
 
 proc crc32_update(crc, b):
     return (crc >> 8) ^ CRC32_TABLE[(crc ^ b) & 255]
-end
 
 proc crc32_finalize(crc):
     return crc ^ 4294967295 # 0xFFFFFFFF
-end
 
 proc byte_to_int(b):
     if b < 0:
         return b + 256
-    end
     return b
-end
 
 proc write_byte(img, offset, val):
     let sector_idx = int(offset / 512)
@@ -78,32 +73,26 @@ proc write_byte(img, offset, val):
         let i = 0
         for i in range(512):
             push(s, 0)
-        end
         img["sectors"][s_key] = s
-    end
     let s = img["sectors"][s_key]
     s[sector_off] = int(val % 256)
     return img
-end
 
 proc write_word_le(img, offset, val):
     write_byte(img, offset, val % 256)
     write_byte(img, offset + 1, (val / 256) % 256)
     return img
-end
 
 proc write_dword_le(img, offset, val):
     write_byte(img, offset, val & 255)
     write_byte(img, offset + 1, (val >> 8) & 255)
     write_byte(img, offset + 2, (val >> 16) & 255)
     write_byte(img, offset + 3, (val >> 24) & 255)
-end
 
 proc write_qword_le(img, off, val):
     write_dword_le(img, off, val & 4294967295)
     let high = int(val / 4294967296)
     write_dword_le(img, off + 4, high)
-end
 
 proc read_byte(img, offset):
     let sector_idx = int(offset / 512)
@@ -111,17 +100,13 @@ proc read_byte(img, offset):
     let s_key = str(sector_idx)
     if not dict_has(img["sectors"], s_key):
         return 0
-    end
     return img["sectors"][s_key][sector_off]
-end
 
 proc read_word_le(img, offset):
     return read_byte(img, offset) + read_byte(img, offset + 1) * 256
-end
 
 proc read_dword_le(img, offset):
     return read_word_le(img, offset) + read_word_le(img, offset + 2) * 65536
-end
 
 proc create_image(size_mb):
     let img = {
@@ -129,21 +114,17 @@ proc create_image(size_mb):
         "sectors": {}
     }
     return img
-end
 
 proc write_mbr(img, bootloader_bytes):
     let boot_len = len(bootloader_bytes)
     if boot_len > 446:
         print("Warning: Bootloader too long for MBR")
-    end
     let i = 0
     for i in range(boot_len):
         write_byte(img, i, bootloader_bytes[i])
-    end
     # MBR Signature
     write_word_le(img, 510, MBR_SIGNATURE)
     return img
-end
 
 proc lba_to_chs(lba):
     let c = int(lba / (16 * 63))
@@ -153,13 +134,11 @@ proc lba_to_chs(lba):
         c = 1023
         h = 15
         s = 63
-    end
     let res = []
     push(res, h)
     push(res, s + (int(c / 256) * 64))
     push(res, c % 256)
     return res
-end
 
 proc create_partition(img, start_lba, size_lba, type_id, bootable):
     let slot = -1
@@ -169,19 +148,15 @@ proc create_partition(img, start_lba, size_lba, type_id, bootable):
         if read_byte(img, entry_off + 4) == 0:
             slot = i
             break
-        end
-    end
     if slot == -1:
         print("Error: no free MBR partition slot")
         return img
-    end
     
     let base = 446 + (slot * 16)
     if bootable:
         write_byte(img, base, 128)
     else:
         write_byte(img, base, 0)
-    end
     
     let chs_start = lba_to_chs(start_lba)
     write_byte(img, base + 1, chs_start[0])
@@ -198,7 +173,6 @@ proc create_partition(img, start_lba, size_lba, type_id, bootable):
     write_dword_le(img, base + 8, start_lba)
     write_dword_le(img, base + 12, size_lba)
     return img
-end
 
 proc format_fat16(img, partition_start_lba, partition_size_lba):
     let partition_start = partition_start_lba * 512
@@ -210,7 +184,6 @@ proc format_fat16(img, partition_start_lba, partition_size_lba):
     let i = 0
     for i in range(8):
         write_byte(img, partition_start + 3 + i, ord(oem[i]))
-    end
     
     write_word_le(img, partition_start + 11, 512) # Bytes per sector
     write_byte(img, partition_start + 13, 8)     # Sectors per cluster
@@ -223,7 +196,6 @@ proc format_fat16(img, partition_start_lba, partition_size_lba):
     else:
         write_word_le(img, partition_start + 19, 0)
         write_dword_le(img, partition_start + 32, partition_size_lba)
-    end
     
     write_byte(img, partition_start + 21, 248) # Media descriptor
     let fat_size = int((partition_size_lba / 256) + 1)
@@ -241,12 +213,10 @@ proc format_fat16(img, partition_start_lba, partition_size_lba):
         write_byte(img, f_base + 1, 255) # FF
         write_byte(img, f_base + 2, 255) # FF
         write_byte(img, f_base + 3, 255) # FF
-    end
     
     # Boot signature
     write_word_le(img, partition_start + 510, MBR_SIGNATURE)
     return img
-end
 
 proc fat16_layout(partition_start_lba, partition_size_lba):
     let reserved = 1
@@ -267,7 +237,6 @@ proc fat16_layout(partition_start_lba, partition_size_lba):
     info["data_start"] = data_start
     info["data_offset"] = data_start * 512
     return info
-end
 
 proc pad_filename_83(filename):
     let name = ""
@@ -277,19 +246,13 @@ proc pad_filename_83(filename):
     for i in range(len(filename)):
         if filename[i] == ".":
             dot_pos = i
-        end
-    end
     if dot_pos >= 0:
         for i in range(dot_pos):
             name = name + filename[i]
-        end
         for i in range(dot_pos + 1, len(filename)):
             ext = ext + filename[i]
-        end
-    end
     if dot_pos < 0:
         name = filename
-    end
     
     let res = ""
     for i in range(8):
@@ -297,25 +260,18 @@ proc pad_filename_83(filename):
             res = res + upper(name[i])
         else:
             res = res + " "
-        end
-    end
     for i in range(3):
         if i < len(ext):
             res = res + upper(ext[i])
         else:
             res = res + " "
-        end
-    end
     return res
-end
 
 proc write_fat_entry(img, fat_start_lba, fat_size, fat_count, cluster, value):
     let i = 0
     for i in range(fat_count):
         let fat_base = (fat_start_lba + (i * fat_size)) * 512
         write_word_le(img, fat_base + (cluster * 2), value)
-    end
-end
 
 proc write_file_to_cluster(img, partition_start_lba, partition_size_lba, dir_cluster, filename, data_bytes):
     let layout = fat16_layout(partition_start_lba, partition_size_lba)
@@ -328,7 +284,6 @@ proc write_file_to_cluster(img, partition_start_lba, partition_size_lba, dir_clu
         dir_start = layout["root_start"] * 512
     else:
         dir_start = layout["data_offset"] + ((dir_cluster - 2) * 4096)
-    end
     
     let name83 = pad_filename_83(filename)
     let slot = -1
@@ -336,24 +291,19 @@ proc write_file_to_cluster(img, partition_start_lba, partition_size_lba, dir_clu
     let max_slots = 512
     if dir_cluster != 0:
         max_slots = 128 # 4096 / 32
-    end
     
     for i in range(max_slots):
         let entry_base = dir_start + (i * 32)
         if read_byte(img, entry_base) == 0:
             slot = i
             break
-        end
-    end
     if slot == -1:
         print("Error: directory full")
         return img
-    end
     
     let entry = dir_start + (slot * 32)
     for i in range(11):
         write_byte(img, entry + i, ord(name83[i]))
-    end
     
     let clusters_needed = int((len(data_bytes) + 4095) / 4096)
     let prev_cluster = -1
@@ -364,17 +314,14 @@ proc write_file_to_cluster(img, partition_start_lba, partition_size_lba, dir_clu
     for c in range(2, 65536):
         if data_written >= len(data_bytes):
             break
-        end
         
         let fat_base0 = fat_start_lba * 512
         if read_word_le(img, fat_base0 + (c * 2)) == 0:
             if first_cluster == -1:
                 first_cluster = c
-            end
             
             if prev_cluster != -1:
                 write_fat_entry(img, fat_start_lba, fat_size, fat_count, prev_cluster, c)
-            end
             
             # Write data to this cluster
             let cluster_data_start = layout["data_offset"] + ((c - 2) * 4096)
@@ -385,24 +332,18 @@ proc write_file_to_cluster(img, partition_start_lba, partition_size_lba, dir_clu
                     data_written = data_written + 1
                 else:
                     break
-                end
-            end
             
             prev_cluster = c
             # Mark as EOF for now, will be overwritten if there's a next cluster
             write_fat_entry(img, fat_start_lba, fat_size, fat_count, c, 65535)
-        end
-    end
     
     write_word_le(img, entry + 26, first_cluster)
     write_dword_le(img, entry + 28, len(data_bytes))
     
     return img
-end
 
 proc write_file(img, partition_start_lba, partition_size_lba, filename, data_bytes):
     return write_file_to_cluster(img, partition_start_lba, partition_size_lba, 0, filename, data_bytes)
-end
 
 proc mkdir(img, partition_start_lba, partition_size_lba, parent_cluster, dirname):
     let layout = fat16_layout(partition_start_lba, partition_size_lba)
@@ -415,7 +356,6 @@ proc mkdir(img, partition_start_lba, partition_size_lba, parent_cluster, dirname
         dir_start = layout["root_start"] * 512
     else:
         dir_start = layout["data_offset"] + ((parent_cluster - 2) * 4096)
-    end
     
     let name83 = pad_filename_83(dirname)
     let slot = -1
@@ -423,20 +363,16 @@ proc mkdir(img, partition_start_lba, partition_size_lba, parent_cluster, dirname
     let max_slots = 512
     if parent_cluster != 0:
         max_slots = 128
-    end
     
     for i in range(max_slots):
         let entry_base = dir_start + (i * 32)
         if read_byte(img, entry_base) == 0:
             slot = i
             break
-        end
-    end
     
     let entry = dir_start + (slot * 32)
     for i in range(11):
         write_byte(img, entry + i, ord(name83[i]))
-    end
     write_byte(img, entry + 11, 16) # ATTR_DIRECTORY
     
     let found_cluster = -1
@@ -446,8 +382,6 @@ proc mkdir(img, partition_start_lba, partition_size_lba, parent_cluster, dirname
         if read_word_le(img, fat_base0 + (c * 2)) == 0:
             found_cluster = c
             break
-        end
-    end
     
     write_fat_entry(img, fat_start_lba, fat_size, fat_count, found_cluster, 65535)
     write_word_le(img, entry + 26, found_cluster)
@@ -457,22 +391,18 @@ proc mkdir(img, partition_start_lba, partition_size_lba, parent_cluster, dirname
     let dir_offset = layout["data_offset"] + ((found_cluster - 2) * 4096)
     for i in range(4096):
         write_byte(img, dir_offset + i, 0)
-    end
     
     return found_cluster
-end
 
 proc create_gpt_header(img, lba, backup_lba, entry_lba, last_lba, entry_count, entry_size, entries_crc):
     let hdr = lba * 512
     # Zero the header first
     for i in range(512):
         write_byte(img, hdr + i, 0)
-    end
     
     let sig = "EFI PART"
     for i in range(8):
         write_byte(img, hdr + i, ord(sig[i]))
-    end
     write_dword_le(img, hdr + 8, 65536) # Revision 1.0
     write_dword_le(img, hdr + 12, 92)   # Header size
     write_dword_le(img, hdr + 16, 0)    # CRC32 placeholder
@@ -484,7 +414,6 @@ proc create_gpt_header(img, lba, backup_lba, entry_lba, last_lba, entry_count, e
     # GUID at 56 (Disk GUID)
     for i in range(16):
         write_byte(img, hdr + 56 + i, (i * 13) % 256)
-    end
     write_qword_le(img, hdr + 72, entry_lba)
     write_dword_le(img, hdr + 80, entry_count)
     write_dword_le(img, hdr + 84, entry_size)
@@ -494,9 +423,7 @@ proc create_gpt_header(img, lba, backup_lba, entry_lba, last_lba, entry_count, e
     let crc = crc32_init()
     for i in range(92):
         crc = crc32_update(crc, read_byte(img, hdr + i))
-    end
     write_dword_le(img, hdr + 16, crc32_finalize(crc))
-end
 
 proc create_gpt_image(size_mb):
     let img = create_image(size_mb)
@@ -513,12 +440,10 @@ proc create_gpt_image(size_mb):
     let entry_sectors = 32
     for i in range(entry_sectors * 512):
         write_byte(img, 2 * 512 + i, 0)
-    end
     
     let entries_crc = crc32_init()
     for i in range(entry_bytes):
         entries_crc = crc32_update(entries_crc, read_byte(img, 2 * 512 + i))
-    end
     let final_entries_crc = crc32_finalize(entries_crc)
     
     create_gpt_header(img, 1, total_sectors - 1, 2, total_sectors - 34, 128, 128, final_entries_crc)
@@ -528,10 +453,8 @@ proc create_gpt_image(size_mb):
     # Backup partition entries
     for i in range(entry_sectors * 512):
         write_byte(img, (total_sectors - 33) * 512 + i, read_byte(img, 2 * 512 + i))
-    end
     
     return img
-end
 
 proc get_efi_partition_info(img):
     let part_start_lba = 2048
@@ -541,7 +464,6 @@ proc get_efi_partition_info(img):
     res["start"] = part_start_lba
     res["size"] = part_size_lba
     return res
-end
 
 proc finalize_gpt(img):
     let size_mb = img["size_mb"]
@@ -552,7 +474,6 @@ proc finalize_gpt(img):
     let entries_crc = crc32_init()
     for i in range(entry_bytes):
         entries_crc = crc32_update(entries_crc, read_byte(img, 2 * 512 + i))
-    end
     let final_entries_crc = crc32_finalize(entries_crc)
     
     # Update headers
@@ -563,8 +484,6 @@ proc finalize_gpt(img):
     let entry_sectors = 32
     for i in range(entry_sectors * 512):
         write_byte(img, (total_sectors - 33) * 512 + i, read_byte(img, 2 * 512 + i))
-    end
-end
 
 proc add_efi_partition(img, efi_binary_bytes):
     # GPT Entry for EFI System Partition (at LBA 2)
@@ -575,12 +494,10 @@ proc add_efi_partition(img, efi_binary_bytes):
     let i = 0
     for i in range(16):
         write_byte(img, entry_off + i, efi_guid[i])
-    end
     
     # Unique Partition GUID (randomish)
     for i in range(16):
         write_byte(img, entry_off + 16 + i, (i * 17) % 256)
-    end
     
     let info = get_efi_partition_info(img)
     let part_start_lba = info["start"]
@@ -594,7 +511,6 @@ proc add_efi_partition(img, efi_binary_bytes):
     for i in range(len(name)):
         write_byte(img, entry_off + 56 + (i * 2), ord(name[i]))
         write_byte(img, entry_off + 56 + (i * 2) + 1, 0)
-    end
     
     # Format the partition as FAT16
     img = format_fat16(img, part_start_lba, part_size_lba)
@@ -610,7 +526,6 @@ proc add_efi_partition(img, efi_binary_bytes):
     finalize_gpt(img)
     
     return img
-end
 
 proc save_image(img, path):
     let total_sectors = int(img["size_mb"] * 1024 * 1024 / 512)
@@ -620,7 +535,6 @@ proc save_image(img, path):
     let i = 0
     for i in range(512):
         push(zero_sector, 0)
-    end
     
     io.writebytes(path, []) # Create/clear file
     
@@ -635,7 +549,6 @@ proc save_image(img, path):
             array_extend(buf, s)
         else:
             array_extend(buf, zero_sector)
-        end
         buf_count = buf_count + 1
         
         # Flush every 1024 sectors (512KB)
@@ -646,17 +559,12 @@ proc save_image(img, path):
             if (int(i * 100 / total_sectors)) > last_printed:
                 last_printed = int(i * 100 / total_sectors)
                 print("Saving: " + str(last_printed) + "%")
-            end
-        end
-    end
     
     if len(buf) > 0:
         io.appendbytes(path, buf)
-    end
     
     print("Image saved successfully.")
     return true
-end
 
 proc create_bootable(kernel_path, output_path, size_mb):
     let kernel_bytes = io.readbytes(kernel_path)
@@ -669,4 +577,3 @@ proc create_bootable(kernel_path, output_path, size_mb):
     img = add_efi_partition(img, kernel_bytes)
     save_image(img, output_path)
     return true
-end

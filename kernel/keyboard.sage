@@ -55,7 +55,6 @@ proc build_scancode_tables():
         append(scan_normal, "")
         append(scan_shifted, "")
         i = i + 1
-    end
     # Row 1: number row
     scan_normal[2] = "1"
     scan_normal[3] = "2"
@@ -159,7 +158,6 @@ proc build_scancode_tables():
     scan_shifted[52] = ">"
     scan_shifted[53] = "?"
     scan_shifted[57] = " "
-end
 
 proc init():
     build_scancode_tables()
@@ -171,86 +169,66 @@ proc init():
     while i < BUFFER_SIZE:
         append(scan_buffer, 0)
         i = i + 1
-    end
     scan_head = 0
     scan_tail = 0
     kbd_ready = true
-end
 
 proc read_scancode():
     # In a real kernel this reads port 0x60 via inb().
     # Here we return from the simulated buffer.
     if scan_head == scan_tail:
         return nil
-    end
     let code = scan_buffer[scan_head]
     scan_head = (scan_head + 1) % BUFFER_SIZE
     return code
-end
 
 proc push_scancode(code):
     let next_tail = (scan_tail + 1) % BUFFER_SIZE
     if next_tail == scan_head:
         return
-    end
     scan_buffer[scan_tail] = code
     scan_tail = next_tail
-end
 
 proc scancode_to_ascii(code, shift):
     if code < 0:
         return ""
-    end
     if code >= 128:
         return ""
-    end
     if shift:
         return scan_shifted[code]
-    end
     return scan_normal[code]
-end
 
 proc update_modifiers(code, pressed):
     if code == KEY_LSHIFT:
         shift_pressed = pressed
         return
-    end
     if code == KEY_RSHIFT:
         shift_pressed = pressed
         return
-    end
     if code == KEY_LCTRL:
         ctrl_pressed = pressed
         return
-    end
     if code == KEY_LALT:
         alt_pressed = pressed
-    end
-end
 
 proc is_shift_pressed():
     return shift_pressed
-end
 
 proc is_ctrl_pressed():
     return ctrl_pressed
-end
 
 proc is_alt_pressed():
     return alt_pressed
-end
 
 proc poll_key():
     let code = read_scancode()
     if code == nil:
         return nil
-    end
     # Key release (bit 7 set) — scancode >= 128
     if code >= 128:
         let release_code = code - 128
         update_modifiers(release_code, false)
         return nil
-    end
     # Key press
     update_modifiers(code, true)
     let ch = scancode_to_ascii(code, shift_pressed)
@@ -259,12 +237,10 @@ proc poll_key():
         result["scancode"] = code
         result["char"] = nil
         return result
-    end
     let result = {}
     result["scancode"] = code
     result["char"] = ch
     return result
-end
 
 ## Non-blocking read of the next character from the keyboard.
 ## Returns the character as a string, or nil if no key is available.
@@ -272,17 +248,13 @@ proc get_char():
     let key = poll_key()
     if key == nil:
         return nil
-    end
     return key["char"]
-end
 
 proc wait_key():
     let key = nil
     while key == nil:
         key = poll_key()
-    end
     return key
-end
 
 proc read_line():
     let line = ""
@@ -291,13 +263,11 @@ proc read_line():
         let key = wait_key()
         if key["char"] == nil:
             continue
-        end
         let ch = key["char"]
         if ch == chr(10):
             console.print_line("")
             done = true
             continue
-        end
         if key["scancode"] == KEY_BACKSPACE:
             if len(line) > 0:
                 line = line[0:len(line) - 1]
@@ -305,18 +275,13 @@ proc read_line():
                 let nx = pos["x"] - 1
                 if nx < 0:
                     nx = 0
-                end
                 console.set_cursor(nx, pos["y"])
                 console.putchar(" ", 7)
                 console.set_cursor(nx, pos["y"])
-            end
             continue
-        end
         line = line + ch
         console.print_str(ch)
-    end
     return line
-end
 
 # ================================================================
 # Hardware I/O Assembly Emission
@@ -329,7 +294,6 @@ comptime:
     let PIC_DATA_PORT = 33
     let EOI_BYTE = 32
     let KBD_ENABLE_CMD = 174
-end
 
 proc emit_keyboard_isr_asm():
     # x86_64 assembly for IRQ1 (keyboard) interrupt handler
@@ -363,7 +327,6 @@ proc emit_keyboard_isr_asm():
     asm = asm + "scancode_buffer:" + nl
     asm = asm + tab + ".quad 0" + nl
     return asm
-end
 
 proc emit_keyboard_init_asm():
     # x86_64 assembly to initialize PS/2 keyboard controller
@@ -394,7 +357,6 @@ proc emit_keyboard_init_asm():
     asm = asm + tab + "outb %al, $0x21" + nl
     asm = asm + tab + "ret" + nl
     return asm
-end
 
 @inline
 proc emit_keyboard_read_asm():
@@ -415,4 +377,3 @@ proc emit_keyboard_read_asm():
     # Value already in rax (return register)
     asm = asm + tab + "ret" + nl
     return asm
-end

@@ -18,7 +18,6 @@ let timer_ready = false
 proc init(frequency_hz):
     if frequency_hz < 1:
         frequency_hz = 1
-    end
     timer_freq = frequency_hz
     # Calculate the PIT divisor
     let divisor = PIT_FREQ / frequency_hz
@@ -32,54 +31,41 @@ proc init(frequency_hz):
     tick_count = 0
     timer_handler = nil
     timer_ready = true
-end
 
 proc tick():
     # Called by the IRQ0 handler on each timer interrupt.
     tick_count = tick_count + 1
     if timer_handler != nil:
         timer_handler()
-    end
-end
 
 proc get_ticks():
     return tick_count
-end
 
 proc get_uptime_ms():
     return tick_count * ms_per_tick
-end
 
 proc get_uptime_s():
     return get_uptime_ms() / 1000
-end
 
 proc sleep_ms(ms):
     if timer_ready == false:
         return
-    end
     let target = get_uptime_ms() + ms
     while get_uptime_ms() < target:
         # busy-wait
         let dummy = 0
-    end
-end
 
 proc sleep_s(s):
     sleep_ms(s * 1000)
-end
 
 proc set_handler(callback):
     timer_handler = callback
-end
 
 proc get_frequency():
     return timer_freq
-end
 
 proc reset():
     tick_count = 0
-end
 
 proc stats():
     let s = {}
@@ -89,7 +75,6 @@ proc stats():
     s["uptime_ms"] = get_uptime_ms()
     s["uptime_s"] = get_uptime_s()
     return s
-end
 
 # ================================================================
 # aarch64 Generic Timer support
@@ -111,7 +96,6 @@ proc aarch64_timer_config(freq_hz):
     # Control: ENABLE=1, IMASK=0
     cfg["cntp_ctl"] = 1
     return cfg
-end
 
 proc aarch64_timer_init_sequence(freq_hz):
     let cfg = aarch64_timer_config(freq_hz)
@@ -127,7 +111,6 @@ proc aarch64_timer_init_sequence(freq_hz):
     s2["value"] = cfg["cntp_ctl"]
     push(seq, s2)
     return seq
-end
 
 # ================================================================
 # riscv64 CLINT timer support
@@ -147,7 +130,6 @@ proc riscv64_timer_config(clint_base, freq_hz):
     cfg["timer_freq"] = 10000000
     cfg["interval"] = cfg["timer_freq"] / freq_hz
     return cfg
-end
 
 proc riscv64_timer_init_sequence(clint_base, freq_hz):
     let cfg = riscv64_timer_config(clint_base, freq_hz)
@@ -165,7 +147,6 @@ proc riscv64_timer_init_sequence(clint_base, freq_hz):
     s2["action"] = "write64_add_current"
     push(seq, s2)
     return seq
-end
 
 # ================================================================
 # Multi-architecture timer dispatcher
@@ -177,43 +158,32 @@ proc timer_init(arch, config):
         if config != nil:
             if config["freq_hz"] != nil:
                 freq = config["freq_hz"]
-            end
-        end
         init(freq)
         return stats()
-    end
     if arch == "aarch64":
         let freq = 100
         if config != nil:
             if config["freq_hz"] != nil:
                 freq = config["freq_hz"]
-            end
-        end
         let result = {}
         result["arch"] = "aarch64"
         result["config"] = aarch64_timer_config(freq)
         result["init_sequence"] = aarch64_timer_init_sequence(freq)
         return result
-    end
     if arch == "riscv64":
         let clint_base = 33554432
         let freq = 100
         if config != nil:
             if config["clint_base"] != nil:
                 clint_base = config["clint_base"]
-            end
             if config["freq_hz"] != nil:
                 freq = config["freq_hz"]
-            end
-        end
         let result = {}
         result["arch"] = "riscv64"
         result["config"] = riscv64_timer_config(clint_base, freq)
         result["init_sequence"] = riscv64_timer_init_sequence(clint_base, freq)
         return result
-    end
     return nil
-end
 
 # ================================================================
 # Hardware I/O Assembly Emission
@@ -228,7 +198,6 @@ comptime:
     let EOI_BYTE = 32
     let CLINT_MTIMECMP_OFFSET = 16384
     let CLINT_MTIME_OFFSET = 49144
-end
 
 proc emit_pit_init_asm(frequency):
     # x86_64 assembly to initialize PIT channel 0
@@ -252,7 +221,6 @@ proc emit_pit_init_asm(frequency):
     asm = asm + tab + "outb %al, $0x40" + nl
     asm = asm + tab + "ret" + nl
     return asm
-end
 
 proc emit_timer_isr_asm():
     # x86_64 assembly for IRQ0 (timer) interrupt handler
@@ -281,7 +249,6 @@ proc emit_timer_isr_asm():
     asm = asm + "tick_count_hw:" + nl
     asm = asm + tab + ".quad 0" + nl
     return asm
-end
 
 proc emit_aarch64_timer_init_asm(freq):
     # aarch64 assembly to initialize the Generic Timer
@@ -300,7 +267,6 @@ proc emit_aarch64_timer_init_asm(freq):
     asm = asm + tab + "msr CNTV_CTL_EL0, x0" + nl
     asm = asm + tab + "ret" + nl
     return asm
-end
 
 proc emit_riscv64_timer_init_asm(interval):
     # riscv64 assembly to initialize CLINT timer (QEMU virt platform)
@@ -325,4 +291,3 @@ proc emit_riscv64_timer_init_asm(interval):
     asm = asm + tab + "sd t2, 0(t1)" + nl
     asm = asm + tab + "ret" + nl
     return asm
-end

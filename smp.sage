@@ -32,7 +32,6 @@ proc topology():
     let tpc = 1
     if physical > 0:
         tpc = logical / physical
-    end
     return {
         "logical_cpus": logical,
         "physical_cores": physical,

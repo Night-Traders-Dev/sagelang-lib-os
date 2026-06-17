@@ -20,23 +20,18 @@ proc align_up(addr, alignment):
     let remainder = addr % alignment
     if remainder == 0:
         return addr
-    end
     return addr + (alignment - remainder)
-end
 
 proc align_down(addr, alignment):
     return addr - (addr % alignment)
-end
 
 # ----- Bitmap helpers -----
 
 proc bit_index(page_num):
     return page_num / 32
-end
 
 proc bit_offset(page_num):
     return page_num % 32
-end
 
 proc set_bit(page_num):
     let idx = bit_index(page_num)
@@ -49,9 +44,6 @@ proc set_bit(page_num):
         if dict_has(flags, str(off)) == false:
             flags[str(off)] = true
             used_pages = used_pages + 1
-        end
-    end
-end
 
 proc clear_bit(page_num):
     let idx = bit_index(page_num)
@@ -62,23 +54,17 @@ proc clear_bit(page_num):
         if dict_has(flags, str(off)):
             dict_delete(flags, str(off))
             used_pages = used_pages - 1
-        end
-    end
-end
 
 proc test_bit(page_num):
     let idx = bit_index(page_num)
     let off = bit_offset(page_num)
     if idx >= bitmap_size:
         return true
-    end
     let entry = bitmap[idx]
     let flags = entry["flags"]
     if dict_has(flags, str(off)):
         return true
-    end
     return false
-end
 
 # ----- Initialize from memory map -----
 
@@ -95,14 +81,9 @@ proc init(memory_map):
                 let region_end = region["base"] + region["length"]
                 if region_end > highest:
                     highest = region_end
-                end
                 i = i + 1
-            end
             if highest > 0:
                 memory_total = highest
-            end
-        end
-    end
 
     total_pages = memory_total / PAGE_SIZE
     used_pages = 0
@@ -117,7 +98,6 @@ proc init(memory_map):
         entry["flags"] = flags
         append(bitmap, entry)
         i = i + 1
-    end
 
     # Mark non-usable regions from the memory map as used
     if memory_map != nil:
@@ -127,14 +107,9 @@ proc init(memory_map):
             if dict_has(region, "type"):
                 if region["type"] != "available":
                     mark_region(region["base"], region["base"] + region["length"], true)
-                end
-            end
             m = m + 1
-        end
-    end
 
     pmm_ready = true
-end
 
 # ----- Mark a region as used or free -----
 
@@ -146,14 +121,9 @@ proc mark_region(start, end_addr, used):
         if p < total_pages:
             if used:
                 set_bit(p)
-            end
             if used == false:
                 clear_bit(p)
-            end
-        end
         p = p + 1
-    end
-end
 
 # ----- Allocate a single 4KB page -----
 
@@ -163,11 +133,8 @@ proc alloc_page():
         if test_bit(p) == false:
             set_bit(p)
             return p * PAGE_SIZE
-        end
         p = p + 1
-    end
     return nil
-end
 
 # ----- Free a single page -----
 
@@ -175,15 +142,12 @@ proc free_page(addr):
     let page_num = addr / PAGE_SIZE
     if page_num < total_pages:
         clear_bit(page_num)
-    end
-end
 
 # ----- Allocate contiguous pages -----
 
 proc alloc_pages(count):
     if count < 1:
         return nil
-    end
     let p = 0
     while p <= total_pages - count:
         let found = true
@@ -192,21 +156,15 @@ proc alloc_pages(count):
             if test_bit(p + c):
                 found = false
                 break
-            end
             c = c + 1
-        end
         if found:
             let c2 = 0
             while c2 < count:
                 set_bit(p + c2)
                 c2 = c2 + 1
-            end
             return p * PAGE_SIZE
-        end
         p = p + 1
-    end
     return nil
-end
 
 # ----- Free contiguous pages -----
 
@@ -216,24 +174,18 @@ proc free_pages(addr, count):
     while c < count:
         if page_num + c < total_pages:
             clear_bit(page_num + c)
-        end
         c = c + 1
-    end
-end
 
 # ----- Statistics -----
 
 proc total_memory():
     return memory_total
-end
 
 proc used_memory():
     return used_pages * PAGE_SIZE
-end
 
 proc free_memory():
     return (total_pages - used_pages) * PAGE_SIZE
-end
 
 proc stats():
     let s = {}
@@ -245,4 +197,3 @@ proc stats():
     s["free_bytes"] = free_memory()
     s["page_size"] = PAGE_SIZE
     return s
-end

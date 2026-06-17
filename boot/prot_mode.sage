@@ -15,7 +15,6 @@ proc emit_enter_prot_mode(gdt_label, cs_sel, ds_sel, target):
     asm = asm + TAB + "movl %eax, %cr0" + NL
     asm = asm + TAB + "ljmp $" + str(cs_sel) + ", $" + target + NL
     return asm
-end
 
 ## Generate a minimal flat 32-bit GDT
 proc emit_flat_gdt():
@@ -32,8 +31,6 @@ proc emit_flat_gdt():
     asm = asm + TAB + ".short gdt_pm_end - gdt_pm - 1" + NL
     asm = asm + TAB + ".long gdt_pm" + NL
     return asm
-end
 
 proc emit_label(name):
     return name + ":" + chr(10)
-end

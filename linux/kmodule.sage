@@ -19,7 +19,7 @@ proc create_module(name):
     m["license"] = "GPL"
     m["author"] = ""
     m["description"] = ""
-    m["version"] = "3.8.0"
+    m["version"] = "3.8.1"
     m["depends"] = []
     m["params"] = []
     m["init_body"] = []
@@ -30,7 +30,6 @@ proc create_module(name):
     m["procfs_entries"] = []
     m["sysfs_attrs"] = []
     return m
-end
 
 proc mod_set_meta(m, license, author, desc, ver):
     m["license"] = license
@@ -38,12 +37,10 @@ proc mod_set_meta(m, license, author, desc, ver):
     m["description"] = desc
     m["version"] = ver
     return m
-end
 
 proc mod_add_depend(m, dep):
     append(m["depends"], dep)
     return m
-end
 
 proc mod_add_param(m, name, ptype, default_val, desc):
     let p = {}
@@ -53,17 +50,14 @@ proc mod_add_param(m, name, ptype, default_val, desc):
     p["desc"] = desc
     append(m["params"], p)
     return m
-end
 
 proc mod_add_include(m, header):
     append(m["includes"], header)
     return m
-end
 
 proc mod_add_global(m, decl):
     append(m["globals"], decl)
     return m
-end
 
 proc mod_add_function(m, signature, body_lines):
     let f = {}
@@ -71,17 +65,14 @@ proc mod_add_function(m, signature, body_lines):
     f["body"] = body_lines
     append(m["functions"], f)
     return m
-end
 
 proc mod_add_init_line(m, line):
     append(m["init_body"], line)
     return m
-end
 
 proc mod_add_exit_line(m, line):
     append(m["exit_body"], line)
     return m
-end
 
 # ========== Procfs entry ==========
 
@@ -91,7 +82,6 @@ proc mod_add_procfs(m, filename, read_func):
     entry["read_func"] = read_func
     append(m["procfs_entries"], entry)
     return m
-end
 
 # ========== Sysfs attribute ==========
 
@@ -102,7 +92,6 @@ proc mod_add_sysfs_attr(m, attr_name, show_func, store_func):
     attr["store"] = store_func
     append(m["sysfs_attrs"], attr)
     return m
-end
 
 # ========== Code generation ==========
 
@@ -121,24 +110,20 @@ proc generate_module_c(m):
     if len(m["procfs_entries"]) > 0:
         code = code + "#include <linux/proc_fs.h>" + nl
         code = code + "#include <linux/seq_file.h>" + nl
-    end
 
     # Custom includes
     let ii = 0
     while ii < len(m["includes"]):
         code = code + "#include <" + m["includes"][ii] + ">" + nl
         ii = ii + 1
-    end
     code = code + nl
 
     # Module info
     code = code + "MODULE_LICENSE(" + q + m["license"] + q + ");" + nl
     if m["author"] != "":
         code = code + "MODULE_AUTHOR(" + q + m["author"] + q + ");" + nl
-    end
     if m["description"] != "":
         code = code + "MODULE_DESCRIPTION(" + q + m["description"] + q + ");" + nl
-    end
     code = code + "MODULE_VERSION(" + q + m["version"] + q + ");" + nl
     code = code + nl
 
@@ -149,22 +134,17 @@ proc generate_module_c(m):
         if p["type"] == "int":
             code = code + "static int " + p["name"] + " = " + str(p["default"]) + ";" + nl
             code = code + "module_param(" + p["name"] + ", int, 0644);" + nl
-        end
         if p["type"] == "bool":
             let bval = "false"
             if p["default"]:
                 bval = "true"
-            end
             code = code + "static bool " + p["name"] + " = " + bval + ";" + nl
             code = code + "module_param(" + p["name"] + ", bool, 0644);" + nl
-        end
         if p["type"] == "string":
             code = code + "static char *" + p["name"] + " = " + q + str(p["default"]) + q + ";" + nl
             code = code + "module_param(" + p["name"] + ", charp, 0644);" + nl
-        end
         code = code + "MODULE_PARM_DESC(" + p["name"] + ", " + q + p["desc"] + q + ");" + nl
         pi = pi + 1
-    end
     code = code + nl
 
     # Global variables
@@ -172,7 +152,6 @@ proc generate_module_c(m):
     while gi < len(m["globals"]):
         code = code + m["globals"][gi] + nl
         gi = gi + 1
-    end
     code = code + nl
 
     # Custom functions
@@ -184,10 +163,8 @@ proc generate_module_c(m):
         while bi < len(f["body"]):
             code = code + "    " + f["body"][bi] + nl
             bi = bi + 1
-        end
         code = code + "}" + nl + nl
         fi = fi + 1
-    end
 
     # Procfs entries
     if len(m["procfs_entries"]) > 0:
@@ -208,8 +185,6 @@ proc generate_module_c(m):
             code = code + "    .proc_release = single_release," + nl
             code = code + "};" + nl + nl
             pe = pe + 1
-        end
-    end
 
     # Init function
     code = code + "static int __init " + name + "_init(void) {" + nl
@@ -220,13 +195,11 @@ proc generate_module_c(m):
         let pe2 = m["procfs_entries"][pei]
         code = code + "    proc_create(" + q + pe2["filename"] + q + ", 0444, NULL, &" + pe2["filename"] + "_pops);" + nl
         pei = pei + 1
-    end
     # Custom init body
     let ini = 0
     while ini < len(m["init_body"]):
         code = code + "    " + m["init_body"][ini] + nl
         ini = ini + 1
-    end
     code = code + "    return 0;" + nl
     code = code + "}" + nl + nl
 
@@ -239,20 +212,17 @@ proc generate_module_c(m):
         let pe3 = m["procfs_entries"][peri]
         code = code + "    remove_proc_entry(" + q + pe3["filename"] + q + ", NULL);" + nl
         peri = peri + 1
-    end
     # Custom exit body
     let exi = 0
     while exi < len(m["exit_body"]):
         code = code + "    " + m["exit_body"][exi] + nl
         exi = exi + 1
-    end
     code = code + "}" + nl + nl
 
     code = code + "module_init(" + name + "_init);" + nl
     code = code + "module_exit(" + name + "_exit);" + nl
 
     return code
-end
 
 # ========== DKMS config generation ==========
 
@@ -269,7 +239,6 @@ proc generate_dkms_conf(m):
     conf = conf + "DEST_MODULE_LOCATION[0]=" + q + "/extra" + q + nl
     conf = conf + "AUTOINSTALL=" + q + "yes" + q + nl
     return conf
-end
 
 # ========== Kbuild generation ==========
 
@@ -289,4 +258,3 @@ proc generate_kbuild(m):
     code = code + "install:" + nl
     code = code + chr(9) + "$(MAKE) -C $(KDIR) M=$(PWD) modules_install" + nl
     return code
-end

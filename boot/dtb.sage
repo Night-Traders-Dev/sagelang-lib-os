@@ -11,13 +11,11 @@ comptime:
     let FDT_PROP = 3
     let FDT_NOP = 4
     let FDT_END = 9
-end
 
 # Default QEMU DTB load addresses
 comptime:
     let QEMU_DTB_ADDR_ARM = 1073741824
     let QEMU_DTB_ADDR_RISCV = 2214592512
-end
 
 let NL = chr(10)
 let TAB = chr(9)
@@ -30,7 +28,6 @@ proc read_u32_be(bytes, offset):
     let b2 = bytes[offset + 2]
     let b3 = bytes[offset + 3]
     return ((b0 * 16777216) + (b1 * 65536) + (b2 * 256) + b3)
-end
 
 # --- Parse a DTB header from raw bytes ---
 # Returns a dict with: magic, totalsize, off_dt_struct, off_dt_strings,
@@ -41,7 +38,6 @@ proc parse_dtb_header(bytes):
     if magic != FDT_MAGIC:
         print("dtb: invalid magic: expected 0xD00DFEED")
         return nil
-    end
     header["magic"] = magic
     header["totalsize"] = read_u32_be(bytes, 4)
     header["off_dt_struct"] = read_u32_be(bytes, 8)
@@ -53,7 +49,6 @@ proc parse_dtb_header(bytes):
     header["size_dt_strings"] = read_u32_be(bytes, 32)
     header["size_dt_struct"] = read_u32_be(bytes, 36)
     return header
-end
 
 # --- Read a null-terminated string from a byte array ---
 @inline
@@ -64,12 +59,9 @@ proc read_cstring(bytes, offset):
         let ch = bytes[i]
         if ch == 0:
             return s
-        end
         s = s + chr(ch)
         i = i + 1
-    end
     return s
-end
 
 # --- Align offset up to 4-byte boundary ---
 @inline
@@ -77,15 +69,12 @@ proc align4(offset):
     let rem = offset % 4
     if rem != 0:
         return offset + (4 - rem)
-    end
     return offset
-end
 
 # --- Read a property name from the strings block ---
 @inline
 proc read_string_at(bytes, strings_offset, nameoff):
     return read_cstring(bytes, strings_offset + nameoff)
-end
 
 # --- Walk structure block to find a node by path ---
 # path: e.g. "/memory" or "/cpus/cpu@0"
@@ -106,16 +95,12 @@ proc find_node(bytes, header, path):
         if c == "/":
             if current != "":
                 push(parts, current)
-            end
             current = ""
         else:
             current = current + c
-        end
         pi = pi + 1
-    end
     if current != "":
         push(parts, current)
-    end
 
     let depth = 0
     let match_depth = 0
@@ -141,11 +126,6 @@ proc find_node(bytes, header, path):
                             match_depth = match_depth + 1
                             if match_depth == target_depth:
                                 found = true
-                            end
-                        end
-                    end
-                end
-            end
             depth = depth + 1
 
         else if token == FDT_END_NODE:
@@ -153,13 +133,9 @@ proc find_node(bytes, header, path):
             if found:
                 if depth < (len(parts)):
                     return node
-                end
-            end
             if found == false:
                 if match_depth > depth:
                     match_depth = depth
-                end
-            end
 
         else if token == FDT_PROP:
             let prop_len = read_u32_be(bytes, offset)
@@ -172,9 +148,7 @@ proc find_node(bytes, header, path):
                 while vi < prop_len:
                     push(pval, bytes[offset + vi])
                     vi = vi + 1
-                end
                 node["properties"][pname] = pval
-            end
             offset = align4(offset + prop_len)
 
         else if token == FDT_NOP:
@@ -185,13 +159,10 @@ proc find_node(bytes, header, path):
         else:
             break
         end end end end end
-    end
 
     if found:
         return node
-    end
     return nil
-end
 
 # --- Get a named property value from a parsed node ---
 # node: dict returned by find_node (has "properties" key)
@@ -201,13 +172,10 @@ end
 proc get_property(node, name):
     if node == nil:
         return nil
-    end
     let props = node["properties"]
     if dict_has(props, name):
         return props[name]
-    end
     return nil
-end
 
 # --- Parse /memory nodes to extract base + size pairs ---
 # Returns an array of dicts, each with "base" and "size" keys (as integers).
@@ -216,21 +184,17 @@ proc find_memory_regions(bytes):
     let header = parse_dtb_header(bytes)
     if header == nil:
         return []
-    end
 
     let mem_node = find_node(bytes, header, "/memory")
     if mem_node == nil:
         # Try /memory@0 as used by some firmware
         mem_node = find_node(bytes, header, "/memory@0")
-    end
     if mem_node == nil:
         return []
-    end
 
     let reg = get_property(mem_node, "reg")
     if reg == nil:
         return []
-    end
 
     let regions = []
     let offset = 0
@@ -246,10 +210,8 @@ proc find_memory_regions(bytes):
         region["size"] = (size_hi * 4294967296) + size_lo
         push(regions, region)
         offset = offset + 16
-    end
 
     return regions
-end
 
 # --- Count CPU nodes under /cpus ---
 # Walks the /cpus node and counts child nodes named cpu@N.
@@ -257,7 +219,6 @@ proc find_cpu_count(bytes):
     let header = parse_dtb_header(bytes)
     if header == nil:
         return 0
-    end
 
     let struct_off = header["off_dt_struct"]
     let total = header["totalsize"]
@@ -282,16 +243,11 @@ proc find_cpu_count(bytes):
                 if depth == (cpus_depth + 1):
                     if startswith(name, "cpu@"):
                         count = count + 1
-                    end
-                end
             else:
                 if depth == 1:
                     if name == "cpus":
                         in_cpus = true
                         cpus_depth = depth
-                    end
-                end
-            end
             depth = depth + 1
 
         else if token == FDT_END_NODE:
@@ -299,8 +255,6 @@ proc find_cpu_count(bytes):
             if in_cpus:
                 if depth < cpus_depth:
                     return count
-                end
-            end
 
         else if token == FDT_PROP:
             let prop_len = read_u32_be(bytes, offset)
@@ -314,7 +268,5 @@ proc find_cpu_count(bytes):
         else:
             break
         end end end end end
-    end
 
     return count
-end

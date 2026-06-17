@@ -16,19 +16,16 @@ proc default_config():
     config["entry"] = "_start"
     config["sections"] = []
     return config
-end
 
 # --- Set base address ---
 proc set_base_address(config, addr):
     config["base_address"] = addr
     return config
-end
 
 # --- Set stack size ---
 proc set_stack_size(config, size):
     config["stack_size"] = size
     return config
-end
 
 # --- Add a custom section ---
 proc add_section(config, name, flags):
@@ -37,7 +34,6 @@ proc add_section(config, name, flags):
     sec["flags"] = flags
     push(config["sections"], sec)
     return config
-end
 
 # --- Generate standard kernel linker script ---
 proc generate_script(config):
@@ -95,12 +91,10 @@ proc generate_script(config):
         s = s + TAB + TAB + "*(." + sec["name"] + ")" + NL
         s = s + TAB + "}" + NL
         s = s + NL
-    end
     # Kernel end marker
     s = s + TAB + "KERNEL_END = .;" + NL
     s = s + "}" + NL
     return s
-end
 
 # --- Generate UEFI PE binary linker script ---
 proc generate_uefi_script():
@@ -146,7 +140,6 @@ proc generate_uefi_script():
     s = s + TAB + "}" + NL
     s = s + "}" + NL
     return s
-end
 
 # --- Generate aarch64 bare-metal linker script ---
 proc generate_aarch64_script(config):
@@ -188,7 +181,6 @@ proc generate_aarch64_script(config):
     s = s + TAB + "KERNEL_END = .;" + NL
     s = s + "}" + NL
     return s
-end
 
 # --- Generate riscv64 bare-metal linker script ---
 proc generate_riscv64_script(config):
@@ -230,36 +222,28 @@ proc generate_riscv64_script(config):
     s = s + TAB + "KERNEL_END = .;" + NL
     s = s + "}" + NL
     return s
-end
 
 # --- Architecture dispatcher ---
 proc generate_arch_script(arch, config):
     if arch == "x86_64":
         return generate_script(config)
-    end
     if arch == "aarch64":
         return generate_aarch64_script(config)
-    end
     if arch == "riscv64":
         return generate_riscv64_script(config)
-    end
     return generate_script(config)
-end
 
 # --- Architecture-specific default configs ---
 proc aarch64_default_config():
     let config = default_config()
     config["base_address"] = 1073741824
     return config
-end
 
 proc riscv64_default_config():
     let config = default_config()
     config["base_address"] = 2147483648
     return config
-end
 
 # --- Write linker script to file ---
 proc write_script(path, script):
     writefile(path, script)
-end

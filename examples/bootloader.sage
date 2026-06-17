@@ -116,4 +116,3 @@ if r2 == 0 and r3 == 0:
     print "Expected output: SageOS Bootloader OK"
 else:
     print "Compilation failed. Check that 'as' and 'ld' are installed."
-end

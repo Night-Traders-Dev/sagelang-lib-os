@@ -37,13 +37,11 @@ proc build_bootstrap(phys_base, kernel_virt, kernel_phys, kernel_size):
     # ... more complex mapping logic ...
     
     return tables
-end
 
 ## Map a range of memory in the provided tables
 proc map_range(tables, virt, phys, size, flags):
     # Logic to walk levels and add entries
     return nil
-end
 
 ## Serialize the tables to a byte array for writing to physical memory
 proc serialize(tables):
@@ -54,14 +52,11 @@ proc serialize(tables):
         let hi = (entry >> 32) & 0xFFFFFFFF
         push_u32_le(bytes, lo)
         push_u32_le(bytes, hi)
-    end
     # PDPTs, PDs...
     return bytes
-end
 
 proc push_u32_le(arr, val):
     push(arr, val & 0xFF)
     push(arr, (val >> 8) & 0xFF)
     push(arr, (val >> 16) & 0xFF)
     push(arr, (val >> 24) & 0xFF)
-end

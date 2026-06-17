@@ -30,12 +30,10 @@ proc create_event_loop(name, max_events):
     ev["handlers"] = []
     ev["timeout_ms"] = -1
     return ev
-end
 
 proc evloop_set_timeout(ev, ms):
     ev["timeout_ms"] = ms
     return ev
-end
 
 proc evloop_add_fd(ev, fd, events, handler_name):
     let entry = {}
@@ -44,7 +42,6 @@ proc evloop_add_fd(ev, fd, events, handler_name):
     entry["handler"] = handler_name
     append(ev["fds"], entry)
     return ev
-end
 
 # ========== Event descriptor ==========
 
@@ -59,18 +56,13 @@ proc create_event(fd, event_mask):
     # Check flags using integer division for bit checking
     if event_mask % 2 == 1:
         e["readable"] = true
-    end
     if (event_mask / 4) % 2 == 1:
         e["writable"] = true
-    end
     if (event_mask / 8) % 2 == 1:
         e["error"] = true
-    end
     if (event_mask / 16) % 2 == 1:
         e["hangup"] = true
-    end
     return e
-end
 
 # ========== C code generation ==========
 
@@ -91,7 +83,6 @@ proc emit_event_loop_c(ev):
     while hi < len(ev["fds"]):
         code = code + "static void " + ev["fds"][hi]["handler"] + "(int fd, uint32_t events);" + nl
         hi = hi + 1
-    end
     code = code + nl
 
     # Event loop function
@@ -110,7 +101,6 @@ proc emit_event_loop_c(ev):
         code = code + "    ev.data.fd = " + str(entry["fd"]) + ";" + nl
         code = code + "    epoll_ctl(epfd, EPOLL_CTL_ADD, " + str(entry["fd"]) + ", &ev);" + nl
         fi = fi + 1
-    end
     code = code + nl
 
     # Event loop
@@ -131,9 +121,7 @@ proc emit_event_loop_c(ev):
             code = code + "            if (events[i].data.fd == " + str(entry2["fd"]) + ") " + entry2["handler"] + "(events[i].data.fd, events[i].events);" + nl
         else:
             code = code + "            else if (events[i].data.fd == " + str(entry2["fd"]) + ") " + entry2["handler"] + "(events[i].data.fd, events[i].events);" + nl
-        end
         di = di + 1
-    end
 
     code = code + "        }" + nl
     code = code + "    }" + nl
@@ -142,7 +130,6 @@ proc emit_event_loop_c(ev):
     code = code + "}" + nl
 
     return code
-end
 
 # ========== Convenience ==========
 
@@ -150,4 +137,3 @@ proc tcp_server_loop(name, listen_fd, max_clients):
     let ev = create_event_loop(name, max_clients + 1)
     ev = evloop_add_fd(ev, listen_fd, EPOLLIN, "handle_accept")
     return ev
-end

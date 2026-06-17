@@ -63,7 +63,6 @@ let BAUD_1200 = 96
 
 proc baud_divisor(baud):
     return (115200 / baud) | 0
-end
 
 # Build a serial port configuration descriptor
 proc create_config(base_port, baud, data_bits, stop_bits, parity):
@@ -78,33 +77,24 @@ proc create_config(base_port, baud, data_bits, stop_bits, parity):
     let lcr = 0
     if data_bits == 5:
         lcr = 0
-    end
     if data_bits == 6:
         lcr = 1
-    end
     if data_bits == 7:
         lcr = 2
-    end
     if data_bits == 8:
         lcr = 3
-    end
     if stop_bits == 2:
         lcr = lcr + 4
-    end
     if parity == 1:
         lcr = lcr + 8
-    end
     if parity == 2:
         lcr = lcr + 24
-    end
     cfg["lcr"] = lcr
     return cfg
-end
 
 # Default config: COM1, 115200 baud, 8N1
 proc default_config():
     return create_config(1016, 115200, 8, 1, 0)
-end
 
 # Generate the initialization sequence as a list of {port, value} pairs
 # This is useful for codegen backends that emit port I/O instructions
@@ -147,7 +137,6 @@ proc init_sequence(cfg):
     s7["value"] = 11
     push(seq, s7)
     return seq
-end
 
 # Generate a loopback test sequence
 proc loopback_test_sequence(cfg):
@@ -175,16 +164,13 @@ proc loopback_test_sequence(cfg):
     s4["value"] = 15
     push(seq, s4)
     return seq
-end
 
 # Encode a string as a list of byte values for transmission
 proc encode_string(text):
     let bytes = []
     for i in range(len(text)):
         push(bytes, ord(text[i]))
-    end
     return bytes
-end
 
 # Encode a string with newline (CR+LF)
 proc encode_line(text):
@@ -192,7 +178,6 @@ proc encode_line(text):
     push(bytes, 13)
     push(bytes, 10)
     return bytes
-end
 
 # Generate write sequence for a string
 proc write_string_sequence(cfg, text):
@@ -211,9 +196,7 @@ proc write_string_sequence(cfg, text):
         wr["port"] = base + 0
         wr["value"] = bytes[i]
         push(seq, wr)
-    end
     return seq
-end
 
 # Format a hex byte string
 proc hex_byte(b):
@@ -221,7 +204,6 @@ proc hex_byte(b):
     let lo = b & 15
     let digits = "0123456789abcdef"
     return digits[hi] + digits[lo]
-end
 
 # Format number as hex string
 proc to_hex(value, width):
@@ -232,31 +214,23 @@ proc to_hex(value, width):
         result = hex_byte(byte_val) + result
         value = value >> 8
         remaining = remaining - 1
-    end
     return "0x" + result
-end
 
 # Format a debug log line with timestamp placeholder
 proc format_debug(tag, message):
     return "[" + tag + "] " + message
-end
 
 # Common port name lookup
 proc port_name(base):
     if base == 1016:
         return "COM1"
-    end
     if base == 760:
         return "COM2"
-    end
     if base == 1000:
         return "COM3"
-    end
     if base == 744:
         return "COM4"
-    end
     return "COM?"
-end
 
 # ================================================================
 # aarch64 PL011 UART support
@@ -295,7 +269,6 @@ proc pl011_config(base_addr, baud):
     cfg["lcrh_addr"] = base_addr + PL011_LCRH
     cfg["cr_addr"] = base_addr + PL011_CR
     return cfg
-end
 
 proc pl011_init_sequence(base_addr, baud):
     let cfg = pl011_config(base_addr, baud)
@@ -326,7 +299,6 @@ proc pl011_init_sequence(base_addr, baud):
     s5["value"] = cfg["cr"]
     push(seq, s5)
     return seq
-end
 
 # ================================================================
 # riscv64 16550-compatible UART (MMIO)
@@ -357,7 +329,6 @@ proc riscv64_uart_config(base_addr, baud):
     # 8N1 config
     cfg["lcr"] = 3
     return cfg
-end
 
 proc riscv64_uart_init_sequence(base_addr, baud):
     let cfg = riscv64_uart_config(base_addr, baud)
@@ -398,7 +369,6 @@ proc riscv64_uart_init_sequence(base_addr, baud):
     s7["value"] = 11
     push(seq, s7)
     return seq
-end
 
 # ================================================================
 # Assembly emission helpers
@@ -411,14 +381,11 @@ let TAB = chr(9)
 proc _asm(inst, ops):
     if ops == "":
         return TAB + inst + NL
-    end
     return TAB + inst + " " + ops + NL
-end
 
 @inline
 proc _lbl(name):
     return name + ":" + NL
-end
 
 # ================================================================
 # x86_64 serial assembly emission (port I/O)
@@ -452,7 +419,6 @@ proc emit_serial_init_x86(base_port):
     a = a + _asm("outb", "%al, %dx")
     a = a + _asm("ret", "")
     return a
-end
 
 @inline
 proc emit_serial_tx_x86(base_port):
@@ -466,7 +432,6 @@ proc emit_serial_tx_x86(base_port):
     a = a + _asm("movb", "%dil, %al")
     a = a + _asm("outb", "%al, %dx")
     return a
-end
 
 @inline
 proc emit_serial_putchar_x86(base_port):
@@ -479,7 +444,6 @@ proc emit_serial_putchar_x86(base_port):
     a = a + _asm("popq", "%rdx")
     a = a + _asm("ret", "")
     return a
-end
 
 @inline
 proc emit_serial_puts_x86(base_port):
@@ -499,7 +463,6 @@ proc emit_serial_puts_x86(base_port):
     a = a + _asm("popq", "%rsi")
     a = a + _asm("ret", "")
     return a
-end
 
 # ================================================================
 # aarch64 serial assembly emission (PL011 MMIO)
@@ -522,7 +485,6 @@ proc emit_serial_init_aarch64(base_addr):
     a = a + _asm("str", "w2, [x1, #48]")
     a = a + _asm("ret", "")
     return a
-end
 
 @inline
 proc emit_serial_tx_aarch64(base_addr):
@@ -535,7 +497,6 @@ proc emit_serial_tx_aarch64(base_addr):
     a = a + _asm("b.ne", ".Lwait_tx_a64")
     a = a + _asm("str", "w0, [x1]")
     return a
-end
 
 @inline
 proc emit_serial_putchar_aarch64(base_addr):
@@ -544,7 +505,6 @@ proc emit_serial_putchar_aarch64(base_addr):
     a = a + emit_serial_tx_aarch64(base_addr)
     a = a + _asm("ret", "")
     return a
-end
 
 @inline
 proc emit_serial_puts_aarch64(base_addr):
@@ -561,7 +521,6 @@ proc emit_serial_puts_aarch64(base_addr):
     a = a + _asm("ldp", "x29, x30, [sp], #16")
     a = a + _asm("ret", "")
     return a
-end
 
 # ================================================================
 # riscv64 serial assembly emission (16550 MMIO)
@@ -587,7 +546,6 @@ proc emit_serial_init_riscv64(base_addr):
     a = a + _asm("sb", "t1, 4(t0)")
     a = a + _asm("ret", "")
     return a
-end
 
 @inline
 proc emit_serial_tx_riscv64(base_addr):
@@ -600,7 +558,6 @@ proc emit_serial_tx_riscv64(base_addr):
     a = a + _asm("beqz", "t1, .Lwait_tx_rv64")
     a = a + _asm("sb", "a0, 0(t0)")
     return a
-end
 
 @inline
 proc emit_serial_putchar_riscv64(base_addr):
@@ -609,7 +566,6 @@ proc emit_serial_putchar_riscv64(base_addr):
     a = a + emit_serial_tx_riscv64(base_addr)
     a = a + _asm("ret", "")
     return a
-end
 
 @inline
 proc emit_serial_puts_riscv64(base_addr):
@@ -631,7 +587,6 @@ proc emit_serial_puts_riscv64(base_addr):
     a = a + _asm("addi", "sp, sp, 16")
     a = a + _asm("ret", "")
     return a
-end
 
 # ================================================================
 # Multi-architecture UART dispatcher
@@ -646,7 +601,6 @@ proc uart_init(arch, base_addr, baud):
         result["config"] = cfg
         result["init_sequence"] = init_sequence(cfg)
         return result
-    end
     if arch == "aarch64":
         let result = {}
         result["arch"] = "aarch64"
@@ -654,7 +608,6 @@ proc uart_init(arch, base_addr, baud):
         result["config"] = pl011_config(base_addr, baud)
         result["init_sequence"] = pl011_init_sequence(base_addr, baud)
         return result
-    end
     if arch == "riscv64":
         let result = {}
         result["arch"] = "riscv64"
@@ -662,6 +615,4 @@ proc uart_init(arch, base_addr, baud):
         result["config"] = riscv64_uart_config(base_addr, baud)
         result["init_sequence"] = riscv64_uart_init_sequence(base_addr, baud)
         return result
-    end
     return nil
-end

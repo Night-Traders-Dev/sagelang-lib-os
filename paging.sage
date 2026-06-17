@@ -31,69 +31,52 @@ let PAGE_MMIO = 19
 proc level_name(level):
     if level == 4:
         return "PML4"
-    end
     if level == 3:
         return "PDPT"
-    end
     if level == 2:
         return "PD"
-    end
     if level == 1:
         return "PT"
-    end
     return "Unknown"
-end
 
 # Extract page table index from virtual address at a given level
 proc page_index(vaddr, level):
     if level == 4:
         return (vaddr >> 39) & 511
-    end
     if level == 3:
         return (vaddr >> 30) & 511
-    end
     if level == 2:
         return (vaddr >> 21) & 511
-    end
     if level == 1:
         return (vaddr >> 12) & 511
-    end
     return 0
-end
 
 # Extract page offset from virtual address
 proc page_offset_4k(vaddr):
     return vaddr & 4095
-end
 
 proc page_offset_2m(vaddr):
     return vaddr & 2097151
-end
 
 proc page_offset_1g(vaddr):
     return vaddr & 1073741823
-end
 
 # Align address down to page boundary
 proc align_down(addr, alignment):
     return addr - (addr & (alignment - 1))
-end
 
 # Align address up to page boundary
 proc align_up(addr, alignment):
     let mask = alignment - 1
     return (addr + mask) - ((addr + mask) & mask)
-end
 
 # Calculate number of pages needed for a given size
 proc pages_needed(size, page_size):
     return ((size + page_size - 1) / page_size) | 0
-end
 
 # Create a page table entry
 proc make_pte(phys_addr, flags):
     return (phys_addr & 4503599627366400) + (flags & 4095)
-end
 
 # Decode a page table entry
 proc decode_pte(entry):
@@ -110,7 +93,6 @@ proc decode_pte(entry):
     pte["global"] = (entry & 256) != 0
     pte["address"] = entry & 4503599627366400
     return pte
-end
 
 # Create an identity-mapped page table layout (for bootloader/early kernel)
 # Returns a list of mapping descriptors, not actual tables
@@ -126,9 +108,7 @@ proc identity_map_range(phys_start, phys_end, flags):
         m["size"] = 4096
         push(mappings, m)
         addr = addr + 4096
-    end
     return mappings
-end
 
 # Create a higher-half kernel mapping layout
 # Maps phys_start..phys_end to virt_base + (phys_start..phys_end)
@@ -144,9 +124,7 @@ proc higher_half_map(phys_start, phys_end, virt_base, flags):
         m["size"] = 4096
         push(mappings, m)
         addr = addr + 4096
-    end
     return mappings
-end
 
 # Describe a virtual address in terms of page table indices
 proc describe_vaddr(vaddr):
@@ -157,24 +135,20 @@ proc describe_vaddr(vaddr):
     desc["pt_index"] = page_index(vaddr, 1)
     desc["offset"] = page_offset_4k(vaddr)
     return desc
-end
 
 # Check if an address is canonical (x86-64)
 proc is_canonical(vaddr):
     let top_bits = (vaddr >> 47) & 131071
     return top_bits == 0 or top_bits == 131071
-end
 
 # Get the higher-half kernel base address (conventional -2GB)
 proc kernel_base():
     # 0xFFFFFFFF80000000 = 18446744071562067968
     return 18446744071562067968
-end
 
 # Get the higher-half direct map base (Linux convention at 0xFFFF888000000000)
 proc direct_map_base():
     return 18446612682702848000
-end
 
 # =========================================================================
 # AArch64 (ARMv8) Page Table Support — 4KB granule, 4-level (L0-L3)
@@ -194,7 +168,6 @@ let AARCH64_ADDR_MASK = 281474976706560
 # phys_addr occupies bits 12-47, flags occupy the attribute bits
 proc aarch64_make_pte(phys_addr, flags):
     return (phys_addr & AARCH64_ADDR_MASK) + flags
-end
 
 # Decode an AArch64 page table entry into a dict
 proc aarch64_decode_pte(entry):
@@ -206,7 +179,6 @@ proc aarch64_decode_pte(entry):
     pte["AF"] = (entry & 1024) != 0
     pte["address"] = entry & AARCH64_ADDR_MASK
     return pte
-end
 
 # Describe an AArch64 virtual address by splitting into level indices
 # 4KB granule, 48-bit VA: L0[47:39], L1[38:30], L2[29:21], L3[20:12], offset[11:0]
@@ -218,7 +190,6 @@ proc aarch64_describe_vaddr(addr):
     desc["L3_index"] = (addr >> 12) & 511
     desc["offset"] = addr & 4095
     return desc
-end
 
 # =========================================================================
 # RISC-V 64 (Sv48) Page Table Support — 4KB pages, 4-level
@@ -240,7 +211,6 @@ let RV64_PPN_MASK = 18014398509481984
 proc riscv64_make_pte(phys_addr, flags):
     let ppn = (phys_addr >> 12) << 10
     return (ppn & RV64_PPN_MASK) + (flags & 255)
-end
 
 # Decode a RISC-V 64 Sv48 page table entry into a dict
 proc riscv64_decode_pte(entry):
@@ -255,7 +225,6 @@ proc riscv64_decode_pte(entry):
     # Reconstruct the physical address from the PPN
     pte["address"] = ((entry & RV64_PPN_MASK) >> 10) << 12
     return pte
-end
 
 # Describe a RISC-V 64 Sv48 virtual address by splitting into VPN levels
 # Sv48: VPN[3][47:39], VPN[2][38:30], VPN[1][29:21], VPN[0][20:12], offset[11:0]
@@ -267,7 +236,6 @@ proc riscv64_describe_vaddr(addr):
     desc["VPN0"] = (addr >> 12) & 511
     desc["offset"] = addr & 4095
     return desc
-end
 
 # =========================================================================
 # Architecture Dispatcher
@@ -278,40 +246,28 @@ end
 proc arch_make_pte(arch, phys_addr, flags):
     if arch == "x86_64":
         return make_pte(phys_addr, flags)
-    end
     if arch == "aarch64":
         return aarch64_make_pte(phys_addr, flags)
-    end
     if arch == "riscv64":
         return riscv64_make_pte(phys_addr, flags)
-    end
     return nil
-end
 
 # Dispatch decode_pte by architecture name
 proc arch_decode_pte(arch, entry):
     if arch == "x86_64":
         return decode_pte(entry)
-    end
     if arch == "aarch64":
         return aarch64_decode_pte(entry)
-    end
     if arch == "riscv64":
         return riscv64_decode_pte(entry)
-    end
     return nil
-end
 
 # Dispatch describe_vaddr by architecture name
 proc arch_describe_vaddr(arch, addr):
     if arch == "x86_64":
         return describe_vaddr(addr)
-    end
     if arch == "aarch64":
         return aarch64_describe_vaddr(addr)
-    end
     if arch == "riscv64":
         return riscv64_describe_vaddr(addr)
-    end
     return nil
-end

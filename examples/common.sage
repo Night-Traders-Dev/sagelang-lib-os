@@ -30,41 +30,29 @@ let TAB = chr(9)
 proc get_as(arch):
     if arch == "x86_64":
         return "as"
-    end
     if arch == "aarch64":
         return "aarch64-linux-gnu-as"
-    end
     if arch == "riscv64":
         return "riscv64-unknown-elf-as"
-    end
     return "as"
-end
 
 proc get_cc(arch):
     if arch == "x86_64":
         return "gcc"
-    end
     if arch == "aarch64":
         return "aarch64-linux-gnu-gcc"
-    end
     if arch == "riscv64":
         return "riscv64-unknown-elf-gcc"
-    end
     return "gcc"
-end
 
 proc get_ld(arch):
     if arch == "x86_64":
         return "ld"
-    end
     if arch == "aarch64":
         return "aarch64-linux-gnu-ld"
-    end
     if arch == "riscv64":
         return "riscv64-unknown-elf-ld"
-    end
     return "ld"
-end
 
 # ============================================================================
 # Boot assembly generation
@@ -108,7 +96,6 @@ proc _gen_boot_x86_64(entry):
     asm = asm + "    hlt" + NL
     asm = asm + "    jmp .Lhalt" + NL
     return asm
-end
 
 # aarch64: bare-metal entry for QEMU virt machine
 proc _gen_boot_aarch64(entry):
@@ -141,7 +128,6 @@ proc _gen_boot_aarch64(entry):
     asm = asm + "stack_bottom: .skip 65536" + NL
     asm = asm + "stack_top:" + NL
     return asm
-end
 
 # riscv64: bare-metal entry for QEMU virt machine
 proc _gen_boot_riscv64(entry):
@@ -173,20 +159,15 @@ proc _gen_boot_riscv64(entry):
     asm = asm + "stack_bottom: .skip 65536" + NL
     asm = asm + "stack_top:" + NL
     return asm
-end
 
 proc gen_boot_asm(arch, entry):
     if arch == "x86_64":
         return _gen_boot_x86_64(entry)
-    end
     if arch == "aarch64":
         return _gen_boot_aarch64(entry)
-    end
     if arch == "riscv64":
         return _gen_boot_riscv64(entry)
-    end
     return ""
-end
 
 # ============================================================================
 # Kernel C code generation
@@ -245,7 +226,6 @@ proc _gen_kernel_c_x86_64(features):
         c = c + "void vga_puts(const char *s) { while(*s) vga_putc(*s++); }" + NL
         c = c + "void vga_set_color(uint8_t fg,uint8_t bg) { vga_color=(uint8_t)((bg<<4)|fg); }" + NL
         c = c + NL
-    end
 
     c = c + "/* ===== String helpers ===== */" + NL
     c = c + "static int streq(const char *a,const char *b) {" + NL
@@ -281,9 +261,7 @@ proc _gen_kernel_c_x86_64(features):
         c = c + "    serial_puts(\"  ESP=\"); serial_puthex(esp); serial_puts(\" EBP=\"); serial_puthex(ebp); serial_puts(\"\\n\");" + NL
         c = c + "    serial_puts(\"  EFLAGS=\"); serial_puthex(eflags); serial_puts(\"\\n\"); }" + NL
         c = c + NL
-    end
     return c
-end
 
 # aarch64: PL011 serial (MMIO)
 proc _gen_kernel_c_aarch64(features):
@@ -343,9 +321,7 @@ proc _gen_kernel_c_aarch64(features):
         c = c + "    serial_puts(\"  X2 =\"); serial_puthex(x2); serial_puts(\" X3 =\"); serial_puthex(x3); serial_puts(\"\\n\");" + NL
         c = c + "    serial_puts(\"  SP =\"); serial_puthex(sp); serial_puts(\" EL =\"); serial_puthex(el>>2); serial_puts(\"\\n\"); }" + NL
         c = c + NL
-    end
     return c
-end
 
 # riscv64: 16550 serial (MMIO)
 proc _gen_kernel_c_riscv64(features):
@@ -399,22 +375,16 @@ proc _gen_kernel_c_riscv64(features):
         c = c + "    serial_puts(\"  A2=\"); serial_puthex(a2); serial_puts(\" A3=\"); serial_puthex(a3); serial_puts(\"\\n\");" + NL
         c = c + "    serial_puts(\"  SP=\"); serial_puthex(sp); serial_puts(\" MSTATUS=\"); serial_puthex(pc); serial_puts(\"\\n\"); }" + NL
         c = c + NL
-    end
     return c
-end
 
 proc gen_kernel_c(arch, features):
     if arch == "x86_64":
         return _gen_kernel_c_x86_64(features)
-    end
     if arch == "aarch64":
         return _gen_kernel_c_aarch64(features)
-    end
     if arch == "riscv64":
         return _gen_kernel_c_riscv64(features)
-    end
     return ""
-end
 
 # ============================================================================
 # Linker scripts
@@ -438,7 +408,6 @@ proc gen_linker_script(arch):
         s = s + "    }" + NL
         s = s + "}" + NL
         return s
-    end
     if arch == "aarch64":
         s = s + "OUTPUT_FORMAT(\"elf64-littleaarch64\")" + NL
         s = s + "ENTRY(_start)" + NL
@@ -454,7 +423,6 @@ proc gen_linker_script(arch):
         s = s + "    }" + NL
         s = s + "}" + NL
         return s
-    end
     if arch == "riscv64":
         s = s + "OUTPUT_FORMAT(\"elf64-littleriscv\")" + NL
         s = s + "ENTRY(_start)" + NL
@@ -470,9 +438,7 @@ proc gen_linker_script(arch):
         s = s + "    }" + NL
         s = s + "}" + NL
         return s
-    end
     return ""
-end
 
 # ============================================================================
 # Build commands
@@ -490,37 +456,28 @@ proc build_commands(arch, out_dir, boot_asm, kernel_c, ld_script):
     # Assemble boot stub
     if arch == "x86_64":
         push(cmds, as_cmd + " --32 -o " + boot_o + " " + boot_asm)
-    end
     if arch == "aarch64":
         push(cmds, as_cmd + " -o " + boot_o + " " + boot_asm)
-    end
     if arch == "riscv64":
         push(cmds, as_cmd + " -march=rv64gc -mabi=lp64d -o " + boot_o + " " + boot_asm)
-    end
 
     # Compile kernel C
     let cflags = " -ffreestanding -nostdlib -O2 -c"
     if arch == "x86_64":
         cflags = cflags + " -m32"
-    end
     if arch == "riscv64":
         cflags = cflags + " -march=rv64gc -mabi=lp64d -mcmodel=medany"
-    end
     push(cmds, cc + cflags + " -o " + kernel_o + " " + kernel_c)
 
     # Link
     if arch == "x86_64":
         push(cmds, ld + " -m elf_i386 -T " + ld_script + " -o " + elf + " " + boot_o + " " + kernel_o)
-    end
     if arch == "aarch64":
         push(cmds, ld + " -T " + ld_script + " -o " + elf + " " + boot_o + " " + kernel_o)
-    end
     if arch == "riscv64":
         push(cmds, ld + " -m elf64lriscv -T " + ld_script + " -o " + elf + " " + boot_o + " " + kernel_o)
-    end
 
     return cmds
-end
 
 proc run_commands(cmds):
     let rc = 0
@@ -528,10 +485,7 @@ proc run_commands(cmds):
         rc = sys.exec(cmd + " 2>&1")
         if rc != 0:
             return rc
-        end
-    end
     return 0
-end
 
 # ============================================================================
 # QEMU launch commands
@@ -540,19 +494,14 @@ end
 proc qemu_cmd(arch, elf_path):
     if arch == "x86_64":
         return "qemu-system-x86_64 -machine q35 -m 64M -display none -serial mon:stdio -no-reboot -kernel " + elf_path
-    end
     if arch == "aarch64":
         return "qemu-system-aarch64 -machine virt -cpu cortex-a57 -m 128M -display none -serial mon:stdio -no-reboot -kernel " + elf_path
-    end
     if arch == "riscv64":
         return "qemu-system-riscv64 -machine virt -m 128M -display none -serial mon:stdio -bios none -no-reboot -kernel " + elf_path
-    end
     return ""
-end
 
 proc qemu_cmd_debug(arch, elf_path, port):
     return qemu_cmd(arch, elf_path) + " -s -S -gdb tcp::" + str(port)
-end
 
 # ============================================================================
 # High-level build pipeline
@@ -582,7 +531,6 @@ proc build_kernel(arch, out_dir, features):
     result["qemu"] = qemu_cmd(arch, elf)
     result["qemu_debug"] = qemu_cmd_debug(arch, elf, 1234)
     return result
-end
 
 proc compile_and_run(arch, out_dir, features):
     let result = build_kernel(arch, out_dir, features)
@@ -591,13 +539,11 @@ proc compile_and_run(arch, out_dir, features):
     if rc != 0:
         print "Build FAILED (exit code: " + str(rc) + ")"
         return result
-    end
     print "Build OK: " + result["elf"]
     print ""
     print "Run in QEMU:"
     print "  " + result["qemu"]
     return result
-end
 
 # ============================================================================
 # Architecture validation
@@ -605,13 +551,10 @@ end
 
 proc is_valid_arch(arch):
     return arch == "x86_64" or arch == "aarch64" or arch == "riscv64"
-end
 
 proc arch_from_args(default_arch):
     let args = sys.args()
     # args[0] = "./sage", args[1] = script_name, args[2] = first user arg
     if len(args) > 2:
         return args[2]
-    end
     return default_arch
-end

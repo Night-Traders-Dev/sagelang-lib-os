@@ -26,7 +26,6 @@ if not common.is_valid_arch(arch):
     print "Error: unsupported architecture: " + arch
     print "Supported: x86_64, aarch64, riscv64"
     sys.exit(1)
-end
 
 print "=== SageOS Minimal Kernel ==="
 print "Architecture: " + arch
@@ -53,12 +52,11 @@ if arch == "x86_64":
     kernel_main_c = kernel_main_c + "    parse_multiboot(magic, mbi);" + NL
 else:
     kernel_main_c = kernel_main_c + "void kmain(void) {" + NL
-end
 
 kernel_main_c = kernel_main_c + "    serial_init();" + NL
 kernel_main_c = kernel_main_c + "    serial_puts(\"\\n\");" + NL
 kernel_main_c = kernel_main_c + "    serial_puts(\"========================================\\n\");" + NL
-kernel_main_c = kernel_main_c + "    serial_puts(\"  SageOS Kernel v3.8.0\\n\");" + NL
+kernel_main_c = kernel_main_c + "    serial_puts(\"  SageOS Kernel v3.8.1\\n\");" + NL
 kernel_main_c = kernel_main_c + "    serial_puts(\"  Architecture: " + arch + "\\n\");" + NL
 kernel_main_c = kernel_main_c + "    serial_puts(\"  Built with Sage Programming Language\\n\");" + NL
 kernel_main_c = kernel_main_c + "    serial_puts(\"========================================\\n\");" + NL
@@ -70,7 +68,6 @@ if arch == "x86_64":
     kernel_main_c = kernel_main_c + "    serial_puts(\"KB upper=\"); serial_putdec(mem_upper_kb); serial_puts(\"KB\\n\");" + NL
 else:
     kernel_main_c = kernel_main_c + "    serial_puts(\"[OK] Memory: 128MB (QEMU default)\\n\");" + NL
-end
 
 # Computation: sum 1..100
 kernel_main_c = kernel_main_c + "    uint32_t sum = 0;" + NL
@@ -81,13 +78,10 @@ kernel_main_c = kernel_main_c + "    serial_puts(\" (expected 5050)\\n\");" + NL
 kernel_main_c = kernel_main_c + "    serial_puts(\"\\n[OK] Kernel halting cleanly.\\n\");" + NL
 if arch == "x86_64":
     kernel_main_c = kernel_main_c + "    __asm__ volatile(\"cli; hlt\");" + NL
-end
 if arch == "aarch64":
     kernel_main_c = kernel_main_c + "    while (1) __asm__ volatile(\"wfe\");" + NL
-end
 if arch == "riscv64":
     kernel_main_c = kernel_main_c + "    while (1) __asm__ volatile(\"wfi\");" + NL
-end
 kernel_main_c = kernel_main_c + "}" + NL
 
 # Append kmain to the generated kernel C file
@@ -103,16 +97,13 @@ if rc != 0:
     print "Failed commands may need toolchain install:"
     if arch == "aarch64":
         print "  sudo apt install gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu"
-    end
     if arch == "riscv64":
         print "  sudo apt install gcc-riscv64-linux-gnu binutils-riscv64-linux-gnu"
-    end
     sys.exit(1)
-end
 
 print "Build OK: " + result["elf"]
 print ""
 print "=== Run with QEMU ==="
 print result["qemu"]
 print ""
-print "Expected output: SageOS Kernel v3.8.0 + arch + sum(1..100)=5050"
+print "Expected output: SageOS Kernel v3.8.1 + arch + sum(1..100)=5050"

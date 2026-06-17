@@ -206,7 +206,6 @@ proc syscall_desc(nr, name, nargs):
     d["name"] = name
     d["nargs"] = nargs
     return d
-end
 
 # Build a syscall invocation record (for codegen)
 
@@ -220,21 +219,17 @@ proc make_syscall(arch, nr, args):
         sc["nr_reg"] = "rax"
         let arg_regs = ["rdi", "rsi", "rdx", "r10", "r8", "r9"]
         sc["arg_regs"] = arg_regs
-    end
     if arch == ARCH_AARCH64:
         sc["instruction"] = "svc #0"
         sc["nr_reg"] = "x8"
         let arg_regs = ["x0", "x1", "x2", "x3", "x4", "x5"]
         sc["arg_regs"] = arg_regs
-    end
     if arch == ARCH_RV64:
         sc["instruction"] = "ecall"
         sc["nr_reg"] = "a7"
         let arg_regs = ["a0", "a1", "a2", "a3", "a4", "a5"]
         sc["arg_regs"] = arg_regs
-    end
     return sc
-end
 
 # Generate inline assembly for a syscall (x86_64)
 
@@ -244,16 +239,12 @@ proc emit_syscall_asm_x64(nr, arg_count):
     asm = asm + "    movq $" + str(nr) + ", %rax" + nl
     if arg_count >= 1:
         asm = asm + "    # arg1 already in %rdi" + nl
-    end
     if arg_count >= 2:
         asm = asm + "    # arg2 already in %rsi" + nl
-    end
     if arg_count >= 3:
         asm = asm + "    # arg3 already in %rdx" + nl
-    end
     asm = asm + "    syscall" + nl
     return asm
-end
 
 # Generate inline assembly for a syscall (aarch64)
 
@@ -263,64 +254,49 @@ proc emit_syscall_asm_arm64(nr, arg_count):
     asm = asm + "    mov x8, #" + str(nr) + nl
     if arg_count >= 1:
         asm = asm + "    # arg1 already in x0" + nl
-    end
     asm = asm + "    svc #0" + nl
     return asm
-end
 
 # ========== High-level syscall wrappers ==========
 
 proc sys_exit_desc(code):
     return make_syscall(ARCH_X86_64, SYS_EXIT, [code])
-end
 
 proc sys_write_desc(fd, buf, count):
     return make_syscall(ARCH_X86_64, SYS_WRITE, [fd, buf, count])
-end
 
 proc sys_read_desc(fd, buf, count):
     return make_syscall(ARCH_X86_64, SYS_READ, [fd, buf, count])
-end
 
 proc sys_open_desc(path, flags, mode):
     return make_syscall(ARCH_X86_64, SYS_OPEN, [path, flags, mode])
-end
 
 proc sys_close_desc(fd):
     return make_syscall(ARCH_X86_64, SYS_CLOSE, [fd])
-end
 
 proc sys_mmap_desc(addr, length, prot, flags, fd, offset):
     return make_syscall(ARCH_X86_64, SYS_MMAP, [addr, length, prot, flags, fd, offset])
-end
 
 proc sys_munmap_desc(addr, length):
     return make_syscall(ARCH_X86_64, SYS_MUNMAP, [addr, length])
-end
 
 proc sys_fork_desc():
     return make_syscall(ARCH_X86_64, SYS_FORK, [])
-end
 
 proc sys_getpid_desc():
     return make_syscall(ARCH_X86_64, SYS_GETPID, [])
-end
 
 proc sys_kill_desc(pid, sig):
     return make_syscall(ARCH_X86_64, SYS_KILL, [pid, sig])
-end
 
 proc sys_socket_desc(domain, sock_type, protocol):
     return make_syscall(ARCH_X86_64, SYS_SOCKET, [domain, sock_type, protocol])
-end
 
 proc sys_rt_sigaction_desc(sig, act, oact, sigsetsize):
     return make_syscall(ARCH_X86_64, SYS_RT_SIGACTION, [sig, act, oact, sigsetsize])
-end
 
 proc sys_rt_sigprocmask_desc(how, set, oset, sigsetsize):
     return make_syscall(ARCH_X86_64, SYS_RT_SIGPROCMASK, [how, set, oset, sigsetsize])
-end
 
 ## High-level signal(sig, handler) helper.
 ## Returns a syscall descriptor for rt_sigaction.
@@ -338,19 +314,16 @@ proc signal(sig, handler):
     struct_set(sa, _sigaction_type, "sa_handler", handler)
     # The remaining fields (flags, restorer, mask) are zero-initialized by struct_new
     return sys_rt_sigaction_desc(sig, sa, nil, 8)
-end
 
 ## Default SIGINT handler stub.
 
 proc sigint_handler(sig):
     return sys_exit_desc(128 + sig)
-end
 
 ## Default SIGTERM handler stub.
 
 proc sigterm_handler(sig):
     return sys_exit_desc(128 + sig)
-end
 
 # ========== riscv64 syscall helpers ==========
 
@@ -366,27 +339,19 @@ proc riscv64_syscall(num, args):
     while i < len(args):
         if i == 0:
             sc["a0"] = args[i]
-        end
         if i == 1:
             sc["a1"] = args[i]
-        end
         if i == 2:
             sc["a2"] = args[i]
-        end
         if i == 3:
             sc["a3"] = args[i]
-        end
         if i == 4:
             sc["a4"] = args[i]
-        end
         if i == 5:
             sc["a5"] = args[i]
-        end
         i = i + 1
-    end
     sc["args"] = args
     return sc
-end
 
 # Generate inline assembly for a syscall (riscv64)
 
@@ -396,16 +361,12 @@ proc emit_syscall_asm_rv64(nr, arg_count):
     asm = asm + "    li a7, " + str(nr) + nl
     if arg_count >= 1:
         asm = asm + "    # arg1 already in a0" + nl
-    end
     if arg_count >= 2:
         asm = asm + "    # arg2 already in a1" + nl
-    end
     if arg_count >= 3:
         asm = asm + "    # arg3 already in a2" + nl
-    end
     asm = asm + "    ecall" + nl
     return asm
-end
 
 # ========== Syscall table (for kernel-side dispatch) ==========
 
@@ -438,7 +399,6 @@ proc build_syscall_table():
     append(table, syscall_desc(SYS_RT_SIGPROCMASK, "rt_sigprocmask", 4))
     append(table, syscall_desc(SYS_RT_SIGRETURN, "rt_sigreturn", 0))
     return table
-end
 
 # Get the arch-specific syscall number
 
@@ -448,8 +408,5 @@ proc get_syscall_nr(arch, name):
     while i < len(table):
         if table[i]["name"] == name:
             return table[i]["nr"]
-        end
         i = i + 1
-    end
     return - 1
-end

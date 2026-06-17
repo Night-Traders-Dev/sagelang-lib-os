@@ -151,5 +151,4 @@ proc strerror(err):
     let key = str(err)
     if dict_has(_error_messages, key):
         return _error_messages[key]
-    end
     return "Unknown error " + key

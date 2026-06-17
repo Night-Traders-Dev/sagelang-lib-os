@@ -23,28 +23,23 @@ proc read_sysfs_attr(path):
     let content = io.readfile(path)
     # Trim trailing whitespace and newlines
     return strip(content)
-end
 
 ## Reads a sysfs attribute as an integer.
 proc read_sysfs_int(path):
     let val = read_sysfs_attr(path)
     return int(val)
-end
 
 ## Writes a string to a sysfs attribute.
 proc write_sysfs_attr(path, value):
     return io.writefile(path, str(value))
-end
 
 ## Writes an integer to a sysfs attribute.
 proc write_sysfs_int(path, value):
     return write_sysfs_attr(path, value)
-end
 
 ## Returns true if the given sysfs path exists.
 proc device_exists(path):
     return io.exists(path)
-end
 
 # ========== Device info ==========
 
@@ -57,7 +52,6 @@ proc get_block_device_info(dev_name):
     info["removable"] = read_sysfs_attr(base + "/removable")
     info["ro"] = read_sysfs_attr(base + "/ro")
     return info
-end
 
 ## Gets information about a network device.
 proc get_net_device_info(dev_name):
@@ -71,7 +65,6 @@ proc get_net_device_info(dev_name):
     info_net["speed"] = read_sysfs_attr(base_net + "/speed")
     info_net["duplex"] = read_sysfs_attr(base_net + "/duplex")
     return info_net
-end
 
 ## Gets information about a CPU.
 proc get_cpu_info(cpu_id):
@@ -84,7 +77,6 @@ proc get_cpu_info(cpu_id):
     info_cpu["freq_max"] = read_sysfs_attr(base_cpu + "/cpufreq/scaling_max_freq")
     info_cpu["governor"] = read_sysfs_attr(base_cpu + "/cpufreq/scaling_governor")
     return info_cpu
-end
 
 ## Gets information about a thermal zone.
 proc get_thermal_zone(zone_id):
@@ -95,7 +87,6 @@ proc get_thermal_zone(zone_id):
     info_thermal["temp"] = read_sysfs_attr(base_thermal + "/temp")
     info_thermal["policy"] = read_sysfs_attr(base_thermal + "/policy")
     return info_thermal
-end
 
 ## Gets information about a power supply.
 proc get_power_supply_info(name):
@@ -108,7 +99,6 @@ proc get_power_supply_info(name):
     info_ps["voltage_now"] = read_sysfs_attr(base_ps + "/voltage_now")
     info_ps["current_now"] = read_sysfs_attr(base_ps + "/current_now")
     return info_ps
-end
 
 # ========== Module info ==========
 
@@ -119,7 +109,6 @@ proc get_module_info(mod_name):
     info_mod["name"] = mod_name
     info_mod["refcnt"] = read_sysfs_attr(base_mod + "/refcnt")
     return info_mod
-end
 
 # ========== Platform info ==========
 
@@ -133,7 +122,6 @@ proc get_dmi_info():
     info_dmi["bios_vendor"] = read_sysfs_attr(base_dmi + "/bios_vendor")
     info_dmi["bios_version"] = read_sysfs_attr(base_dmi + "/bios_version")
     return info_dmi
-end
 
 # ========== Sysfs attribute codegen (for kernel modules) ==========
 
@@ -145,7 +133,6 @@ proc create_sysfs_attr(name, show_body, store_body):
     s_attr["store_body"] = store_body
     s_attr["mode"] = 420
     return s_attr
-end
 
 ## Creates a read-only sysfs attribute descriptor.
 proc create_sysfs_attr_ro(name, show_body):
@@ -155,7 +142,6 @@ proc create_sysfs_attr_ro(name, show_body):
     sr_attr["store_body"] = []
     sr_attr["mode"] = 292
     return sr_attr
-end
 
 ## Emits C code for a sysfs attribute.
 proc emit_sysfs_attr_c(attr):
@@ -170,7 +156,6 @@ proc emit_sysfs_attr_c(attr):
     while si < len(attr["show_body"]):
         code = code + "    " + attr["show_body"][si] + nl
         si = si + 1
-    end
     code = code + "}" + nl + nl
 
     # Store function (if writable)
@@ -181,12 +166,9 @@ proc emit_sysfs_attr_c(attr):
         while sti < len(attr["store_body"]):
             code = code + "    " + attr["store_body"][sti] + nl
             sti = sti + 1
-        end
         code = code + "}" + nl + nl
         code = code + "static DEVICE_ATTR_RW(" + name + ");" + nl
     else:
         code = code + "static DEVICE_ATTR_RO(" + name + ");" + nl
-    end
 
     return code
-end

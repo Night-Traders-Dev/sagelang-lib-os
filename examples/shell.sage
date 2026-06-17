@@ -11,7 +11,6 @@ let arch = common.arch_from_args("x86_64")
 if not common.is_valid_arch(arch):
     print "Error: unsupported arch: " + arch
     sys.exit(1)
-end
 
 print "=== SageOS Shell ==="
 print "Arch: " + arch
@@ -40,7 +39,6 @@ if arch == "x86_64":
 else:
     shell_c = shell_c + "static void cmd_mem(void) {" + NL
     shell_c = shell_c + "    serial_puts(\"128MB (QEMU default)\\n\"); }" + NL
-end
 
 shell_c = shell_c + "static void cmd_uptime(void) {" + NL
 shell_c = shell_c + "    serial_puts(\"cmds=\"); serial_putdec(cmd_count); serial_puts(\"\\n\"); }" + NL
@@ -50,10 +48,9 @@ if arch == "x86_64":
     shell_c = shell_c + "    parse_multiboot(magic, mbi);" + NL
 else:
     shell_c = shell_c + "void shell_main(void) {" + NL
-end
 
 shell_c = shell_c + "    serial_init();" + NL
-shell_c = shell_c + "    serial_puts(\"SageOS Shell v3.8.0 " + arch + "\\n\");" + NL
+shell_c = shell_c + "    serial_puts(\"SageOS Shell v3.8.1 " + arch + "\\n\");" + NL
 shell_c = shell_c + "    char cmd[CMD_MAX];" + NL
 shell_c = shell_c + "    while (1) {" + NL
 shell_c = shell_c + "        serial_puts(\"sage@os:~$ \");" + NL
@@ -76,13 +73,10 @@ shell_c = shell_c + "        else if (streq(cmd,\"halt\")) {" + NL
 shell_c = shell_c + "            serial_puts(\"Halting...\\n\");" + NL
 if arch == "x86_64":
     shell_c = shell_c + "            __asm__ volatile(\"cli; hlt\");" + NL
-end
 if arch == "aarch64":
     shell_c = shell_c + "            while(1) __asm__ volatile(\"wfe\");" + NL
-end
 if arch == "riscv64":
     shell_c = shell_c + "            while(1) __asm__ volatile(\"wfi\");" + NL
-end
 shell_c = shell_c + "        }" + NL
 shell_c = shell_c + "        else if (startswith(cmd,\"echo \")) {" + NL
 shell_c = shell_c + "            serial_puts(cmd+5); serial_puts(\"\\n\"); }" + NL
@@ -99,7 +93,6 @@ let rc = common.run_commands(result["commands"])
 if rc != 0:
     print "Build FAILED: " + str(rc)
     sys.exit(1)
-end
 
 print "Build OK: " + result["elf"]
 print ""

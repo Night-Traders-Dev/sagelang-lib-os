@@ -25,7 +25,6 @@ let TSS_BUSY = 11
 # --- Helper: push a single byte ---
 proc push_byte(arr, val):
     push(arr, val % 256)
-end
 
 # --- Helper: push 2 bytes little-endian ---
 proc push_u16(arr, val):
@@ -33,7 +32,6 @@ proc push_u16(arr, val):
     push(arr, v % 256)
     v = (v - (v % 256)) / 256
     push(arr, v % 256)
-end
 
 # --- Helper: push 4 bytes little-endian ---
 proc push_u32(arr, val):
@@ -45,7 +43,6 @@ proc push_u32(arr, val):
     push(arr, v % 256)
     v = (v - (v % 256)) / 256
     push(arr, v % 256)
-end
 
 # --- Create a GDT entry (8 bytes) ---
 # base: 32-bit base address
@@ -71,12 +68,10 @@ proc create_entry(base, limit, access, flags):
     let base_hi = ((base - (base % 16777216)) / 16777216) % 256
     push_byte(entry, base_hi)
     return entry
-end
 
 # --- Null descriptor ---
 proc null_entry():
     return create_entry(0, 0, 0, 0)
-end
 
 # --- Kernel code segment (ring 0, 64-bit) ---
 proc kernel_code_entry():
@@ -84,7 +79,6 @@ proc kernel_code_entry():
     # flags: Long mode = 0x20 -> upper nibble = 0x2
     let access = PRESENT + DPL0 + CODE + EXECUTABLE + RW
     return create_entry(0, 1048575, access, 2)
-end
 
 # --- Kernel data segment (ring 0) ---
 proc kernel_data_entry():
@@ -92,7 +86,6 @@ proc kernel_data_entry():
     # flags: 0x00
     let access = PRESENT + DPL0 + DATA + RW
     return create_entry(0, 1048575, access, 0)
-end
 
 # --- User code segment (ring 3, 64-bit) ---
 proc user_code_entry():
@@ -100,7 +93,6 @@ proc user_code_entry():
     # flags: Long mode = 0x2
     let access = PRESENT + DPL3 + CODE + EXECUTABLE + RW
     return create_entry(0, 1048575, access, 2)
-end
 
 # --- User data segment (ring 3) ---
 proc user_data_entry():
@@ -108,7 +100,6 @@ proc user_data_entry():
     # flags: 0x00
     let access = PRESENT + DPL3 + DATA + RW
     return create_entry(0, 1048575, access, 0)
-end
 
 # --- TSS descriptor (16 bytes in long mode) ---
 proc tss_entry(base, limit):
@@ -119,14 +110,12 @@ proc tss_entry(base, limit):
     let i = 0
     for i in range(len(first)):
         push(entry, first[i])
-    end
     # Next 4 bytes: base bits 32-63
     let base_upper = 0
     push_u32(entry, base_upper)
     # Reserved 4 bytes
     push_u32(entry, 0)
     return entry
-end
 
 # --- Create a complete GDT ---
 proc create_gdt():
@@ -147,7 +136,6 @@ proc create_gdt():
     gdt["user_code_sel"] = 27
     gdt["user_data_sel"] = 35
     return gdt
-end
 
 # --- Serialize GDT to flat byte array ---
 proc serialize(gdt):
@@ -159,10 +147,7 @@ proc serialize(gdt):
         let j = 0
         for j in range(len(entry)):
             push(bytes, entry[j])
-        end
-    end
     return bytes
-end
 
 # --- GDTR structure (6 bytes: 2 limit + 4 base for 32-bit, or 10 bytes for 64-bit) ---
 proc gdtr(base_addr, limit):
@@ -172,7 +157,6 @@ proc gdtr(base_addr, limit):
     # Base: for 32-bit protected mode, 4 bytes
     push_u32(result, base_addr)
     return result
-end
 
 # --- GDTR for 64-bit mode (10 bytes: 2 limit + 8 base) ---
 proc gdtr64(base_addr, limit):
@@ -183,12 +167,10 @@ proc gdtr64(base_addr, limit):
     let hi = (base_addr - (base_addr % 4294967296)) / 4294967296
     push_u32(result, hi)
     return result
-end
 
 # --- Get selector offset for an entry index ---
 proc selector(index, rpl):
     return index * 8 + rpl
-end
 
 # --- Add a TSS to an existing GDT ---
 proc add_tss(gdt, base, limit):
@@ -198,29 +180,23 @@ proc add_tss(gdt, base, limit):
     let idx = len(gdt["entries"]) - 1
     gdt["tss_sel"] = idx * 8
     return gdt
-end
 
 # --- Validate a GDT entry ---
 proc validate_entry(entry):
     if len(entry) < 8:
         return false
-    end
     # Check present bit in access byte (byte 5)
     let access = entry[5]
     let present = access / 128
     if present < 1:
         return false
-    end
     return true
-end
 
 # --- Get entry count ---
 proc entry_count(gdt):
     return len(gdt["entries"])
-end
 
 # --- Compute GDT limit (size - 1) ---
 proc gdt_limit(gdt):
     let bytes = serialize(gdt)
     return len(bytes) - 1
-end

@@ -35,7 +35,6 @@ proc init():
         append(syscall_names, "")
         append(syscall_counts, 0)
         i = i + 1
-    end
     # Register built-in syscalls
     register(SYS_EXIT, "exit", builtin_exit)
     register(SYS_WRITE, "write", builtin_write)
@@ -48,35 +47,27 @@ proc init():
     register(SYS_GETPID, "getpid", builtin_getpid)
     register(SYS_YIELD, "yield", builtin_yield)
     syscall_ready = true
-end
 
 proc register(number, name, handler):
     if number < 0:
         return false
-    end
     if number >= max_syscalls:
         return false
-    end
     syscall_handlers[number] = handler
     syscall_names[number] = name
     syscall_counts[number] = 0
     return true
-end
 
 proc dispatch(syscall_num, args):
     if syscall_num < 0:
         return -1
-    end
     if syscall_num >= max_syscalls:
         return -1
-    end
     let handler = syscall_handlers[syscall_num]
     if handler == nil:
         return -1
-    end
     syscall_counts[syscall_num] = syscall_counts[syscall_num] + 1
     return handler(args)
-end
 
 # ----- Built-in syscall implementations -----
 
@@ -86,7 +77,6 @@ proc sys_write(fd, buf, length):
     args["buf"] = buf
     args["len"] = length
     return dispatch(SYS_WRITE, args)
-end
 
 proc sys_read(fd, buf, length):
     let args = {}
@@ -94,13 +84,11 @@ proc sys_read(fd, buf, length):
     args["buf"] = buf
     args["len"] = length
     return dispatch(SYS_READ, args)
-end
 
 proc sys_exit(code):
     let args = {}
     args["code"] = code
     return dispatch(SYS_EXIT, args)
-end
 
 # ----- Built-in handlers -----
 
@@ -109,16 +97,12 @@ proc builtin_exit(args):
     if args != nil:
         if dict_has(args, "code"):
             code = args["code"]
-        end
-    end
     # In a real kernel this terminates the current process.
     return code
-end
 
 proc builtin_write(args):
     if args == nil:
         return -1
-    end
     let fd = args["fd"]
     let buf = args["buf"]
     let length = args["len"]
@@ -126,26 +110,21 @@ proc builtin_write(args):
     if fd == 1:
         console.print_str(buf)
         return length
-    end
     if fd == 2:
         let old_fg = console.current_fg
         console.set_color(console.RED, console.BLACK)
         console.print_str(buf)
         console.set_color(old_fg, console.BLACK)
         return length
-    end
     return -1
-end
 
 proc builtin_read(args):
     if args == nil:
         return -1
-    end
     let fd = args["fd"]
     let count = 0
     if dict_has(args, "count"):
         count = args["count"]
-    end
     # fd 0 = stdin — read from keyboard buffer
     if fd == 0:
         if dict_has(args, "buffer"):
@@ -161,24 +140,17 @@ proc builtin_read(args):
                         while ki < len(args["kbd_buffer"]):
                             push(new_buf, args["kbd_buffer"][ki])
                             ki = ki + 1
-                        end
                         args["kbd_buffer"] = new_buf
                         read_count = read_count + 1
                     else:
                         return read_count
-                    end
                 else:
                     return read_count
-                end
-            end
             return read_count
-        end
         return 0
-    end
     # fd 1, 2 = stdout/stderr (not readable)
     if fd == 1 or fd == 2:
         return -1
-    end
     # Other fds: check open file table
     if dict_has(args, "file_table"):
         if dict_has(args["file_table"], str(fd)):
@@ -192,14 +164,9 @@ proc builtin_read(args):
                     push(result, data[pos])
                     pos = pos + 1
                     read_count = read_count + 1
-                end
                 file["pos"] = pos
                 return read_count
-            end
-        end
-    end
     return -1
-end
 
 # In-memory file table for the kernel
 let _file_table = {}
@@ -208,15 +175,12 @@ let _next_fd = 3
 proc builtin_open(args):
     if args == nil:
         return -1
-    end
     if not dict_has(args, "path"):
         return -1
-    end
     let path = args["path"]
     let flags = 0
     if dict_has(args, "flags"):
         flags = args["flags"]
-    end
     # Allocate a file descriptor
     let fd = _next_fd
     _next_fd = _next_fd + 1
@@ -227,33 +191,26 @@ proc builtin_open(args):
     file["data"] = []
     _file_table[str(fd)] = file
     return fd
-end
 
 proc builtin_close(args):
     if args == nil:
         return -1
-    end
     let fd = args["fd"]
     let key = str(fd)
     if dict_has(_file_table, key):
         dict_delete(_file_table, key)
         return 0
-    end
     return -1
-end
 
 proc builtin_mmap(args):
     if args == nil:
         return -1
-    end
     let addr = 0
     if dict_has(args, "addr"):
         addr = args["addr"]
-    end
     let length = 4096
     if dict_has(args, "length"):
         length = args["length"]
-    end
     # Allocate a simulated memory region (array of zeros)
     let region = {}
     region["addr"] = addr
@@ -263,24 +220,19 @@ proc builtin_mmap(args):
     while i < length:
         push(region["data"], 0)
         i = i + 1
-    end
     return region
-end
 
 proc builtin_fork(args):
     # Allocate a new PID for the child process
     let pid = next_pid
     next_pid = next_pid + 1
     return pid
-end
 
 proc builtin_exec(args):
     if args == nil:
         return -1
-    end
     if not dict_has(args, "path"):
         return -1
-    end
     # In kernel context, exec replaces the current process image
     # Return the path as confirmation (actual exec requires ELF loader)
     let path = args["path"]
@@ -289,19 +241,16 @@ proc builtin_exec(args):
     result["path"] = path
     result["pid"] = builtin_getpid(nil)
     return result
-end
 
 proc builtin_getpid(args):
     # Return current PID (kernel init process = 1)
     return 1
-end
 
 proc builtin_yield(args):
     # Cooperative yield: in a single-tasked kernel, this is a no-op
     # In a multi-tasked kernel, this would switch to the next ready task
     # Return 0 to indicate success
     return 0
-end
 
 # ----- Introspection -----
 
@@ -314,11 +263,8 @@ proc syscall_table():
             entry["number"] = i
             entry["name"] = syscall_names[i]
             append(entries, entry)
-        end
         i = i + 1
-    end
     return entries
-end
 
 proc stats():
     let s = {}
@@ -333,12 +279,9 @@ proc stats():
             entry["count"] = syscall_counts[i]
             s["total_calls"] = s["total_calls"] + syscall_counts[i]
             append(entries, entry)
-        end
         i = i + 1
-    end
     s["syscalls"] = entries
     return s
-end
 
 # ================================================================
 # Hardware I/O Assembly Emission
@@ -353,7 +296,6 @@ comptime:
     let USER_CS = 24
     let USER_SS = 32
     let IF_FLAG_BIT = 512
-end
 
 proc emit_syscall_entry_asm():
     # x86_64 assembly for SYSCALL instruction entry point
@@ -408,7 +350,6 @@ proc emit_syscall_entry_asm():
     asm = asm + tab + "swapgs" + nl
     asm = asm + tab + "sysretq" + nl
     return asm
-end
 
 proc emit_syscall_init_asm():
     # x86_64 assembly to configure SYSCALL/SYSRET via MSRs
@@ -439,7 +380,6 @@ proc emit_syscall_init_asm():
     asm = asm + tab + "wrmsr" + nl
     asm = asm + tab + "ret" + nl
     return asm
-end
 
 proc emit_svc_entry_aarch64():
     # aarch64 assembly for SVC (supervisor call) exception entry
@@ -503,7 +443,6 @@ proc emit_svc_entry_aarch64():
     asm = asm + tab + "add sp, sp, #264" + nl
     asm = asm + tab + "eret" + nl
     return asm
-end
 
 proc emit_ecall_entry_riscv64():
     # riscv64 assembly for ECALL trap entry (M-mode trap handler)
@@ -602,4 +541,3 @@ proc emit_ecall_entry_riscv64():
     asm = asm + tab + "addi sp, sp, 256" + nl
     asm = asm + tab + "mret" + nl
     return asm
-end

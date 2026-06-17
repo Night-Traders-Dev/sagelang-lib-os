@@ -41,7 +41,6 @@ proc push_u32(arr, val):
     push(arr, v % 256)
     v = (v - (v % 256)) / 256
     push(arr, v % 256)
-end
 
 # --- Helper: push 2 bytes (little-endian u16) ---
 proc push_u16(arr, val):
@@ -49,7 +48,6 @@ proc push_u16(arr, val):
     push(arr, v % 256)
     v = (v - (v % 256)) / 256
     push(arr, v % 256)
-end
 
 # --- Helper: read u32 from byte array at offset ---
 proc read_u32(bytes, off):
@@ -58,20 +56,16 @@ proc read_u32(bytes, off):
     let b2 = bytes[off + 2]
     let b3 = bytes[off + 3]
     return b0 + b1 * 256 + b2 * 65536 + b3 * 16777216
-end
 
 # --- Helper: pad to 8-byte alignment ---
 proc pad_align8(arr):
     let rem = len(arr) % 8
     if rem == 0:
         return
-    end
     let pad = 8 - rem
     let i = 0
     for i in range(pad):
         push(arr, 0)
-    end
-end
 
 # --- Tag: end tag (type=0, size=8) ---
 proc tag_end():
@@ -80,7 +74,6 @@ proc tag_end():
     push_u16(tag, 0)
     push_u32(tag, 8)
     return tag
-end
 
 # --- Tag: information request ---
 proc tag_info_request(tags):
@@ -92,10 +85,8 @@ proc tag_info_request(tags):
     let i = 0
     for i in range(len(tags)):
         push_u32(tag, tags[i])
-    end
     pad_align8(tag)
     return tag
-end
 
 # --- Tag: framebuffer ---
 proc tag_framebuffer(width, height, depth):
@@ -109,7 +100,6 @@ proc tag_framebuffer(width, height, depth):
     push_u32(tag, depth)
     pad_align8(tag)
     return tag
-end
 
 # --- Tag: module alignment ---
 proc tag_module_align():
@@ -118,7 +108,6 @@ proc tag_module_align():
     push_u16(tag, 0)
     push_u32(tag, 8)
     return tag
-end
 
 # --- Tag: entry address override ---
 proc tag_entry_addr(addr):
@@ -130,7 +119,6 @@ proc tag_entry_addr(addr):
     push_u32(tag, addr)
     pad_align8(tag)
     return tag
-end
 
 # --- Create Multiboot2 header ---
 proc create_header():
@@ -139,7 +127,6 @@ proc create_header():
     header["arch"] = ARCH_I386
     header["tags"] = []
     return header
-end
 
 # --- Compute checksum for Multiboot2 header ---
 proc checksum(header_bytes):
@@ -147,7 +134,6 @@ proc checksum(header_bytes):
     let i = 0
     for i in range(len(header_bytes)):
         total = total + header_bytes[i]
-    end
     # checksum is -(magic + arch + length) mod 2^32
     # but we compute from the first 12 bytes
     let magic = read_u32(header_bytes, 0)
@@ -157,9 +143,7 @@ proc checksum(header_bytes):
     let result = 4294967296 - (sum % 4294967296)
     if result == 4294967296:
         return 0
-    end
     return result
-end
 
 # --- Serialize header to flat byte array ---
 proc serialize(header):
@@ -173,14 +157,11 @@ proc serialize(header):
         let j = 0
         for j in range(len(t)):
             push(tag_bytes, t[j])
-        end
-    end
     # Append end tag
     let et = tag_end()
     let k = 0
     for k in range(len(et)):
         push(tag_bytes, et[k])
-    end
     # Total size = 16 (header fields) + tag bytes
     let total_size = 16 + len(tag_bytes)
     # Magic
@@ -195,7 +176,6 @@ proc serialize(header):
     let m = 0
     for m in range(len(tag_bytes)):
         push(bytes, tag_bytes[m])
-    end
     # Compute and patch checksum
     let cs = checksum(bytes)
     bytes[12] = cs % 256
@@ -206,31 +186,24 @@ proc serialize(header):
     cv = (cv - (cv % 256)) / 256
     bytes[15] = cv % 256
     return bytes
-end
 
 # --- Validate a Multiboot2 header ---
 proc validate(bytes):
     if len(bytes) < 16:
         return false
-    end
     let magic = read_u32(bytes, 0)
     if magic != MAGIC:
         return false
-    end
     let arch = read_u32(bytes, 4)
     if arch != ARCH_I386:
         if arch != ARCH_MIPS:
             return false
-        end
-    end
     let hlen = read_u32(bytes, 8)
     let cs = read_u32(bytes, 12)
     let sum = (magic + arch + hlen + cs) % 4294967296
     if sum != 0:
         return false
-    end
     return true
-end
 
 # --- Parse Multiboot2 boot information structure ---
 proc parse_boot_info(addr):
@@ -244,37 +217,27 @@ proc parse_boot_info(addr):
         for safety in range(256):
             if offset + 8 > len(addr):
                 return info
-            end
             let tag_type = read_u32(addr, offset)
             let tag_size = read_u32(addr, offset + 4)
             if tag_type == BOOT_INFO_TAG_END:
                 return info
-            end
             let tag = {}
             tag["type"] = tag_type
             tag["size"] = tag_size
             tag["offset"] = offset
             if tag_type == BOOT_INFO_TAG_MMAP:
                 tag["name"] = "memory_map"
-            end
             if tag_type == BOOT_INFO_TAG_FRAMEBUFFER:
                 tag["name"] = "framebuffer"
-            end
             if tag_type == BOOT_INFO_TAG_CMDLINE:
                 tag["name"] = "cmdline"
-            end
             if tag_type == BOOT_INFO_TAG_BOOTLOADER:
                 tag["name"] = "bootloader"
-            end
             push(info["tags"], tag)
             # Advance to next tag (8-byte aligned)
             let advance = tag_size
             let rem = advance % 8
             if rem != 0:
                 advance = advance + (8 - rem)
-            end
             offset = offset + advance
-        end
-    end
     return info
-end

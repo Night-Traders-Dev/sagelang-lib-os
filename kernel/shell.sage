@@ -16,12 +16,10 @@ proc print_prompt():
     console.print_str("~")
     console.set_color(console.WHITE, console.BLACK)
     console.print_str("$ ")
-end
 
 proc handle_command(cmd):
     if cmd == "":
         return
-    end
     
     if cmd == "help":
         console.print_line("Available commands:")
@@ -31,34 +29,28 @@ proc handle_command(cmd):
         console.print_line("  version  - Show SageOS version")
         console.print_line("  exit     - Exit the shell")
         return
-    end
     
     if cmd == "ls":
         console.print_line("bin/  etc/  home/  kernel.bin")
         return
-    end
     
     if cmd == "clear":
         console.clear_screen(console.BLACK)
         return
-    end
     
     if cmd == "version":
-        console.print_line("SageOS v3.8.0 (x86_64)")
+        console.print_line("SageOS v3.8.1 (x86_64)")
         return
-    end
     
     if cmd == "exit":
         console.print_line("Shutting down...")
         syscall.sys_exit(0)
         return
-    end
     
     console.print_line("sh: command not found: " + cmd)
-end
 
 proc sh_main():
-    console.print_line("SageOS Shell v3.8.0")
+    console.print_line("SageOS Shell v3.8.1")
     console.print_line("Type 'help' for available commands.")
     console.print_line("")
     
@@ -87,19 +79,11 @@ proc sh_main():
                             let new_cmd = ""
                             for i in range(len(cmd_buffer) - 1):
                                 new_cmd = new_cmd + cmd_buffer[i]
-                            end
                             cmd_buffer = new_cmd
-                        end
-                    end
                 else:
                     cmd_buffer = cmd_buffer + ch
                     console.print_str(ch)
-                end
-            end
             # Yield to other tasks if multi-tasking was enabled
             syscall.builtin_yield(nil)
-        end
         
         handle_command(cmd_buffer)
-    end
-end

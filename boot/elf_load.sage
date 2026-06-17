@@ -15,36 +15,28 @@ proc load(src_buf, src_size, relocate):
             # Copy ph["filesz"] bytes from src_buf + ph["offset"]
             # to ph["paddr"] (or ph["vaddr"])
             # ... implementation ...
-        end
         i = i + 1
-    end
     
     return header["entry"]
-end
 
 ## Verify ELF magic and architecture
 proc verify(src_buf):
     if src_buf[0] != 0x7F or src_buf[1] != 0x45 or src_buf[2] != 0x4C or src_buf[3] != 0x46:
         return false
-    end
     return true
-end
 
 ## Get entry point address
 proc entry_phys(src_buf):
     import os.elf as elf
     let header = elf.parse_header(src_buf)
     return header["entry"]
-end
 
 proc entry_virt(src_buf):
     import os.elf as elf
     let header = elf.parse_header(src_buf)
     return header["entry"] # Assuming for now entry is virt
-end
 
 ## Load with randomized physical base (KASLR)
 proc load_kaslr(src_buf, phys_min, phys_max):
     # Select random base and call load()
     return nil
-end

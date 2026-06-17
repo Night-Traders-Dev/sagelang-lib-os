@@ -8,7 +8,6 @@ proc entry(label, kernel_path, cmdline):
         "kernel": kernel_path,
         "cmdline": cmdline
     }
-end
 
 ## Show the menu and return the selected entry index
 proc show(entries, default_idx, timeout_secs):
@@ -18,4 +17,3 @@ proc show(entries, default_idx, timeout_secs):
     # 3. Handle key input (up/down/enter)
     # 4. Handle timeout
     return default_idx
-end

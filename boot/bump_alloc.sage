@@ -8,7 +8,6 @@ proc init(base, limit):
         "limit": limit,
         "cursor": base
     }
-end
 
 ## Allocate memory from the bump heap
 proc alloc(heap, size, align):
@@ -18,24 +17,18 @@ proc alloc(heap, size, align):
         let rem = current % align
         if rem != 0:
             current = current + (align - rem)
-        end
-    end
     
     if current + size > heap["limit"]:
         return nil # Out of memory
-    end
     
     heap["cursor"] = current + size
     return current
-end
 
 ## Reset the allocator (free all)
 proc free_all(heap):
     heap["cursor"] = heap["base"]
     return nil
-end
 
 ## Get current heap usage
 proc used(heap):
     return heap["cursor"] - heap["base"]
-end

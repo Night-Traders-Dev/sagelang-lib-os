@@ -21,19 +21,15 @@ let TAB = chr(9)
 proc emit_asm(instruction, operands):
     if operands == "":
         return TAB + instruction + NL
-    end
     return TAB + instruction + " " + operands + NL
-end
 
 # --- Helper: emit a label ---
 proc emit_label(name):
     return name + ":" + NL
-end
 
 # --- Helper: emit a section directive ---
 proc emit_section(name):
     return ".section " + name + NL
-end
 
 # --- Generate Multiboot1 header (QEMU-compatible) ---
 proc generate_multiboot1_header():
@@ -47,7 +43,6 @@ proc generate_multiboot1_header():
     asm = asm + emit_label("multiboot_header_end")
     asm = asm + NL
     return asm
-end
 
 # --- Generate Multiboot2 header from the multiboot.sage module as assembly ---
 proc generate_multiboot2_from_module():
@@ -70,14 +65,11 @@ proc generate_multiboot2_from_module():
         let val = bytes[i] + bytes[i+1] * 256 + bytes[i+2] * 65536 + bytes[i+3] * 16777216
         asm = asm + TAB + ".long " + str(val) + NL
         i = i + 4
-    end
     while i < len(bytes):
         asm = asm + TAB + ".byte " + str(bytes[i]) + NL
         i = i + 1
-    end
     asm = asm + "multiboot_header_end:" + NL + NL
     return asm
-end
 
 # --- Generate complete boot assembly ---
 proc generate_boot_asm(config):
@@ -126,7 +118,6 @@ proc generate_boot_asm(config):
     # BSS: stack
     asm = asm + generate_stack()
     return asm
-end
 
 # --- Generate GDT loading code ---
 proc generate_gdt_load():
@@ -151,7 +142,6 @@ proc generate_gdt_load():
     asm = asm + emit_asm(".long", "gdt64")
     asm = asm + NL
     return asm
-end
 
 # --- Generate A20 line enable ---
 proc generate_a20_enable():
@@ -163,7 +153,6 @@ proc generate_a20_enable():
     asm = asm + emit_asm("outb", "%al, $0x92")
     asm = asm + NL
     return asm
-end
 
 # --- Generate long mode enable sequence ---
 proc generate_long_mode_enable():
@@ -189,7 +178,6 @@ proc generate_long_mode_enable():
     asm = asm + emit_asm("movl", "%eax, %cr0")
     asm = asm + NL
     return asm
-end
 
 # --- Generate 32-bit entry point ---
 proc generate_entry32():
@@ -216,7 +204,6 @@ proc generate_entry32():
     asm = asm + emit_asm("movl", "%ebx, %edi")
     asm = asm + NL
     return asm
-end
 
 # --- Generate 64-bit trampoline ---
 proc generate_entry64():
@@ -253,7 +240,6 @@ proc generate_entry64():
     asm = asm + emit_asm("jmp", "halt")
     asm = asm + NL
     return asm
-end
 
 # --- Generate stack reservation ---
 proc generate_stack():
@@ -265,7 +251,6 @@ proc generate_stack():
     asm = asm + emit_label("stack_top")
     asm = asm + NL
     return asm
-end
 
 # ===========================================================================
 # AArch64 startup assembly generation
@@ -329,7 +314,6 @@ proc emit_start_aarch64(entry, stack_top):
     asm = asm + NL
 
     return asm
-end
 
 # ===========================================================================
 # RISC-V 64-bit startup assembly generation
@@ -392,7 +376,6 @@ proc emit_start_riscv64(entry, stack_top):
     asm = asm + NL
 
     return asm
-end
 
 # ===========================================================================
 # x86 32-bit standalone boot (for QEMU -kernel direct loading)
@@ -476,7 +459,6 @@ proc generate_boot_asm_mb1(message):
     asm = asm + emit_label("stack_top")
     asm = asm + NL
     return asm
-end
 
 # ===========================================================================
 # FPU / SSE / SIMD initialization
@@ -502,7 +484,6 @@ proc generate_fpu_sse_init():
     asm = asm + emit_asm("fninit", "")
     asm = asm + NL
     return asm
-end
 
 # --- Generate aarch64 NEON/FP enable assembly ---
 # Returns aarch64 assembly to set CPACR_EL1 bits 21:20 = 0b11 (full FP/SIMD access).
@@ -514,7 +495,6 @@ proc generate_fpu_init_aarch64():
     asm = asm + emit_asm("isb", "")
     asm = asm + NL
     return asm
-end
 
 # --- Generate riscv64 FPU enable assembly ---
 # Returns RISC-V assembly to set mstatus.FS bits 14:13 = 0b01 (Initial state).
@@ -525,7 +505,6 @@ proc generate_fpu_init_riscv64():
     asm = asm + emit_asm("csrs", "mstatus, t0")
     asm = asm + NL
     return asm
-end
 
 # ===========================================================================
 # SMP Application Processor startup
@@ -674,7 +653,6 @@ proc generate_ap_trampoline_x86():
     asm = asm + NL
 
     return asm
-end
 
 # --- Generate INIT-SIPI-SIPI sequence to wake APs ---
 # lapic_base: base address of the Local APIC (typically 0xFEE00000).
@@ -724,7 +702,6 @@ proc generate_ap_startup_ipi_x86(lapic_base):
     asm = asm + NL
 
     return asm
-end
 
 # ===========================================================================
 # Architecture dispatcher
@@ -737,16 +714,12 @@ end
 proc emit_start(arch, entry, stack_top):
     if arch == "x86_64":
         return generate_boot_asm(nil)
-    end
     if arch == "aarch64":
         return emit_start_aarch64(entry, stack_top)
-    end
     if arch == "riscv64":
         return emit_start_riscv64(entry, stack_top)
-    end
     print("emit_start: unsupported architecture: " + arch)
     return ""
-end
 
 # ===========================================================================
 # Integration with multiboot.sage and gdt.sage modules
@@ -770,18 +743,14 @@ proc generate_gdt_from_module():
         let hi = bytes[i+4] + bytes[i+5] * 256 + bytes[i+6] * 65536 + bytes[i+7] * 16777216
         if entry_num == 1:
             asm = asm + "gdt64_code:" + NL
-        end
         if entry_num == 2:
             asm = asm + "gdt64_data:" + NL
-        end
         asm = asm + TAB + ".long " + str(lo) + NL
         asm = asm + TAB + ".long " + str(hi) + NL
         i = i + 8
         entry_num = entry_num + 1
-    end
     asm = asm + "gdt64_end:" + NL + NL
     asm = asm + "gdt64_pointer:" + NL
     asm = asm + TAB + ".short gdt64_end - gdt64 - 1" + NL
     asm = asm + TAB + ".long gdt64" + NL + NL
     return asm
-end

@@ -86,6 +86,5 @@ proc interrupt(int_num, ax, bx, cx, dx, es_di):
     if es_di != nil:
         # Simplified: assume dest is a label
         asm = asm + TAB + "movw $" + es_di + ", %di" + NL
-    end
     asm = asm + TAB + "int $" + str(int_num) + NL
     return asm

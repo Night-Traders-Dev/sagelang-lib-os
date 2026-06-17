@@ -77,101 +77,69 @@ let SYSCALL_VECTOR = 128
 proc exception_name(vec):
     if vec == 0:
         return "Divide Error"
-    end
     if vec == 1:
         return "Debug"
-    end
     if vec == 2:
         return "NMI"
-    end
     if vec == 3:
         return "Breakpoint"
-    end
     if vec == 4:
         return "Overflow"
-    end
     if vec == 5:
         return "Bound Range"
-    end
     if vec == 6:
         return "Invalid Opcode"
-    end
     if vec == 7:
         return "Device Not Available"
-    end
     if vec == 8:
         return "Double Fault"
-    end
     if vec == 10:
         return "Invalid TSS"
-    end
     if vec == 11:
         return "Segment Not Present"
-    end
     if vec == 12:
         return "Stack Fault"
-    end
     if vec == 13:
         return "General Protection"
-    end
     if vec == 14:
         return "Page Fault"
-    end
     if vec == 16:
         return "x87 FP Error"
-    end
     if vec == 17:
         return "Alignment Check"
-    end
     if vec == 18:
         return "Machine Check"
-    end
     if vec == 19:
         return "SIMD FP Error"
-    end
     if vec == 20:
         return "Virtualization"
-    end
     if vec == 21:
         return "Control Protection"
-    end
     return "Unknown"
-end
 
 # Returns true if the exception pushes an error code
 proc has_error_code(vec):
     if vec == 8:
         return true
-    end
     if vec == 10:
         return true
-    end
     if vec == 11:
         return true
-    end
     if vec == 12:
         return true
-    end
     if vec == 13:
         return true
-    end
     if vec == 14:
         return true
-    end
     if vec == 17:
         return true
-    end
     if vec == 21:
         return true
-    end
     if vec == 29:
         return true
-    end
     if vec == 30:
         return true
-    end
     return false
-end
 
 # Create an IDT gate descriptor (returns dict with raw field values)
 # handler_addr: 64-bit address of the ISR
@@ -190,10 +158,8 @@ proc make_gate(handler_addr, selector, ist, gate_type, dpl):
     gate["type_name"] = "Unknown"
     if gate_type == 14:
         gate["type_name"] = "Interrupt"
-    end
     if gate_type == 15:
         gate["type_name"] = "Trap"
-    end
 
     # Build the 16 raw bytes of the IDT entry
     let offset_lo = handler_addr & 65535
@@ -235,27 +201,22 @@ proc make_gate(handler_addr, selector, ist, gate_type, dpl):
     push(bytes, 0)
     gate["bytes"] = bytes
     return gate
-end
 
 # Convenience: create a kernel interrupt gate
 proc interrupt_gate(handler_addr, selector):
     return make_gate(handler_addr, selector, 0, 14, 0)
-end
 
 # Convenience: create a kernel trap gate
 proc trap_gate(handler_addr, selector):
     return make_gate(handler_addr, selector, 0, 15, 0)
-end
 
 # Convenience: create a user-callable interrupt gate (for syscalls)
 proc user_interrupt_gate(handler_addr, selector):
     return make_gate(handler_addr, selector, 0, 14, 3)
-end
 
 # Convenience: create an interrupt gate with IST
 proc ist_interrupt_gate(handler_addr, selector, ist):
     return make_gate(handler_addr, selector, ist, 14, 0)
-end
 
 # Create an IDT descriptor table (256 entries)
 # handler_table: dict mapping vector number -> handler address
@@ -274,13 +235,9 @@ proc build_idt(handler_table, selector):
             let bytes = []
             for j in range(16):
                 push(bytes, 0)
-            end
             empty["bytes"] = bytes
             push(idt, empty)
-        end
-    end
     return idt
-end
 
 # Flatten IDT to raw byte array (256 * 16 = 4096 bytes)
 proc idt_to_bytes(idt):
@@ -289,10 +246,7 @@ proc idt_to_bytes(idt):
         let entry_bytes = idt[i]["bytes"]
         for j in range(16):
             push(bytes, entry_bytes[j])
-        end
-    end
     return bytes
-end
 
 # Build IDTR descriptor (6 bytes: 2 limit + 4/8 base)
 proc make_idtr(base_addr):
@@ -314,7 +268,6 @@ proc make_idtr(base_addr):
     push(bytes, (base_addr >> 56) & 255)
     idtr["bytes"] = bytes
     return idtr
-end
 
 # Parse an IDT entry from 16 raw bytes
 proc parse_gate(bs, off):
@@ -333,15 +286,11 @@ proc parse_gate(bs, off):
     gate["gate_type"] = type_attr & 15
     if (type_attr & 15) == 14:
         gate["type_name"] = "Interrupt"
-    end
     if (type_attr & 15) == 15:
         gate["type_name"] = "Trap"
-    end
     if not dict_has(gate, "type_name"):
         gate["type_name"] = "Unknown"
-    end
     return gate
-end
 
 # PIC (8259) initialization command words
 let PIC1_CMD = 32
@@ -398,7 +347,6 @@ proc pic_remap_sequence(vector_base):
     s10["value"] = 255
     push(seq, s10)
     return seq
-end
 
 # ============================================================================
 # aarch64 GIC (Generic Interrupt Controller) support
@@ -457,7 +405,6 @@ proc gic_dist_config(base_addr):
     cfg["itargetsr"] = base_addr + GICD_ITARGETSR
     cfg["icfgr"] = base_addr + GICD_ICFGR
     return cfg
-end
 
 # Returns a dict describing the GIC CPU Interface register layout
 # base_addr: physical base address of the GICC
@@ -472,7 +419,6 @@ proc gic_cpu_config(base_addr):
     cfg["rpr"] = base_addr + GICC_RPR
     cfg["hppir"] = base_addr + GICC_HPPIR
     return cfg
-end
 
 # Returns a dict with the register offset and bit position to enable an IRQ
 # gic: a dist config dict (from gic_dist_config)
@@ -487,7 +433,6 @@ proc gic_enable_irq(gic, irq_num):
     result["value"] = 1 << bit_pos
     result["irq"] = irq_num
     return result
-end
 
 # Returns a list of {addr, value} pairs for GICv2 initialization
 # gicd_base: physical base address of the GIC Distributor
@@ -511,7 +456,6 @@ proc gic_init_sequence(gicd_base, gicc_base):
         s["value"] = 0
         push(seq, s)
         reg = reg + 1
-    end
 
     # Step 3: Disable all SPIs (clear enable bits)
     reg = 1
@@ -521,7 +465,6 @@ proc gic_init_sequence(gicd_base, gicc_base):
         s["value"] = 0xFFFFFFFF
         push(seq, s)
         reg = reg + 1
-    end
 
     # Step 4: Set all SPI priorities to default (0xA0)
     # IPRIORITYR: 4 IRQs per register (1 byte each)
@@ -533,7 +476,6 @@ proc gic_init_sequence(gicd_base, gicc_base):
         s["value"] = 0xA0A0A0A0
         push(seq, s)
         preg = preg + 1
-    end
 
     # Step 5: Set all SPI targets to CPU 0
     # ITARGETSR: 4 IRQs per register (1 byte each)
@@ -544,7 +486,6 @@ proc gic_init_sequence(gicd_base, gicc_base):
         s["value"] = 0x01010101
         push(seq, s)
         treg = treg + 1
-    end
 
     # Step 6: Set all SPIs to level-triggered
     # ICFGR: 16 IRQs per register (2 bits each), SPIs start at reg 2
@@ -555,7 +496,6 @@ proc gic_init_sequence(gicd_base, gicc_base):
         s["value"] = 0
         push(seq, s)
         creg = creg + 1
-    end
 
     # Step 7: Enable distributor (Group 0 forwarding)
     let s_en = {}
@@ -576,14 +516,12 @@ proc gic_init_sequence(gicd_base, gicc_base):
     push(seq, s_cpu)
 
     return seq
-end
 
 # Acknowledge an interrupt (read IAR) — returns dict with addr to read
 proc gic_ack_irq(gicc_base):
     let result = {}
     result["addr"] = gicc_base + GICC_IAR
     return result
-end
 
 # End-of-interrupt (write EOIR) — returns dict with addr and value to write
 proc gic_eoi(gicc_base, irq_num):
@@ -591,7 +529,6 @@ proc gic_eoi(gicc_base, irq_num):
     result["addr"] = gicc_base + GICC_EOIR
     result["value"] = irq_num
     return result
-end
 
 # ============================================================================
 # riscv64 PLIC (Platform-Level Interrupt Controller) support
@@ -631,7 +568,6 @@ proc plic_config(base_addr):
     cfg["enable_stride"] = PLIC_ENABLE_STRIDE
     cfg["context_stride"] = PLIC_CONTEXT_STRIDE
     return cfg
-end
 
 # Returns a dict with the register offset and bit to enable an IRQ
 # plic: a PLIC config dict (from plic_config)
@@ -650,7 +586,6 @@ proc plic_enable_irq(plic, irq_num, context):
     result["irq"] = irq_num
     result["context"] = context
     return result
-end
 
 # Returns a dict for disabling an IRQ on a given context
 proc plic_disable_irq(plic, irq_num, context):
@@ -665,7 +600,6 @@ proc plic_disable_irq(plic, irq_num, context):
     result["irq"] = irq_num
     result["context"] = context
     return result
-end
 
 # Set priority for an interrupt source
 # Returns {addr, value} for the priority register write
@@ -676,7 +610,6 @@ proc plic_set_priority(plic, irq_num, priority):
     result["value"] = priority
     result["irq"] = irq_num
     return result
-end
 
 # Set threshold for a context
 # Returns {addr, value} for the threshold register write
@@ -686,7 +619,6 @@ proc plic_set_threshold(plic, context, threshold):
     result["value"] = threshold
     result["context"] = context
     return result
-end
 
 # Claim an interrupt (read the claim register for a context)
 # Returns dict with the address to read
@@ -695,7 +627,6 @@ proc plic_claim_irq(plic, context):
     result["addr"] = plic["claim"] + context * PLIC_CONTEXT_STRIDE
     result["context"] = context
     return result
-end
 
 # Complete an interrupt (write the IRQ number to the claim register)
 # Returns {addr, value} to write
@@ -705,7 +636,6 @@ proc plic_complete_irq(plic, context, irq_num):
     result["value"] = irq_num
     result["context"] = context
     return result
-end
 
 # Returns a list of {addr, value} pairs for PLIC initialization
 # base_addr: physical base address of the PLIC
@@ -716,10 +646,8 @@ proc plic_init_sequence(base_addr, num_sources):
     # Clamp num_sources to valid range
     if num_sources > 1023:
         num_sources = 1023
-    end
     if num_sources < 1:
         num_sources = 1
-    end
 
     # Step 1: Set all source priorities to 0 (disabled)
     let src = 1
@@ -729,7 +657,6 @@ proc plic_init_sequence(base_addr, num_sources):
         s["value"] = 0
         push(seq, s)
         src = src + 1
-    end
 
     # Step 2: Disable all sources for context 0 (S-mode hart 0 = context 1)
     # Clear all enable registers for context 0 and context 1
@@ -743,9 +670,7 @@ proc plic_init_sequence(base_addr, num_sources):
             s["value"] = 0
             push(seq, s)
             reg = reg + 1
-        end
         ctx = ctx + 1
-    end
 
     # Step 3: Set threshold to 0 for context 0 and context 1
     # (accept all priority levels > 0)
@@ -760,7 +685,6 @@ proc plic_init_sequence(base_addr, num_sources):
     push(seq, s_t1)
 
     return seq
-end
 
 # ============================================================================
 # x86_64 Local APIC / IO-APIC support
@@ -827,7 +751,6 @@ proc lapic_init_sequence(base_addr):
     push(seq, s6)
 
     return seq
-end
 
 # Returns a list of dicts for IO-APIC initialization
 # base_addr: MMIO base address of the IO-APIC (typically 0xFEC00000)
@@ -904,7 +827,6 @@ proc ioapic_init_sequence(base_addr):
     push(seq, s_tmr_hi)
 
     return seq
-end
 
 # Returns a dict for APIC End-Of-Interrupt write
 # base_addr: MMIO base address of the Local APIC
@@ -914,7 +836,6 @@ proc apic_eoi(base_addr):
     result["addr"] = base_addr + comptime(LAPIC_EOI)
     result["value"] = 0
     return result
-end
 
 # ============================================================================
 # aarch64 GICv3 (Generic Interrupt Controller v3) support
@@ -972,7 +893,6 @@ proc gicv3_rdist_init_sequence(rdist_base):
     push(seq, s_poll)
 
     return seq
-end
 
 # Returns a list of dicts for GICv3 Distributor initialization
 # dist_base: physical base address of the GICv3 Distributor
@@ -995,7 +915,6 @@ proc gicv3_dist_init_sequence(dist_base):
     push(seq, s_grp)
 
     return seq
-end
 
 # Returns a list of register/value dicts for GICv3 CPU interface init
 # GICv3 uses system registers instead of memory-mapped CPU interface
@@ -1024,7 +943,6 @@ proc gicv3_cpu_init_sequence():
     push(seq, s_grp)
 
     return seq
-end
 
 # ============================================================================
 # Architecture dispatcher
@@ -1044,7 +962,6 @@ proc interrupt_init(arch, base_addr):
         result["sequence"] = pic_remap_sequence(base_addr)
         result["vector_base"] = base_addr
         return result
-    end
 
     if arch == "aarch64":
         result["type"] = "GIC"
@@ -1054,17 +971,14 @@ proc interrupt_init(arch, base_addr):
         result["gicc"] = gic_cpu_config(gicc_base)
         result["sequence"] = gic_init_sequence(gicd_base, gicc_base)
         return result
-    end
 
     if arch == "riscv64":
         result["type"] = "PLIC"
         result["plic"] = plic_config(base_addr)
         result["sequence"] = plic_init_sequence(base_addr, 127)
         return result
-    end
 
     result["type"] = "unknown"
     result["error"] = "Unsupported architecture: " + arch
     result["sequence"] = []
     return result
-end

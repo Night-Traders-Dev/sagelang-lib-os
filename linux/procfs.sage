@@ -23,14 +23,10 @@ proc read_proc_file(path):
             line = ""
         else:
             line = line + content[i]
-        end
         i = i + 1
-    end
     if line != "":
         append(result["lines"], line)
-    end
     return result
-end
 
 # Parse /proc/cpuinfo
 proc read_cpuinfo():
@@ -45,7 +41,6 @@ proc read_cpuinfo():
             if dict_has(current_cpu, "processor"):
                 append(info["processors"], current_cpu)
                 current_cpu = {}
-            end
         else:
             # Parse "key : value" lines
             let colon_pos = -1
@@ -54,9 +49,7 @@ proc read_cpuinfo():
                 if line[j] == ":":
                     colon_pos = j
                     break
-                end
                 j = j + 1
-            end
             if colon_pos > 0:
                 # Extract key (trim trailing whitespace)
                 let key = ""
@@ -64,18 +57,12 @@ proc read_cpuinfo():
                 while k < colon_pos:
                     if line[k] != " ":
                         key = key + line[k]
-                    end
                     if line[k] == " ":
                         if k + 1 < colon_pos:
                             if line[k + 1] != " ":
                                 if line[k + 1] != ":":
                                     key = key + "_"
-                                end
-                            end
-                        end
-                    end
                     k = k + 1
-                end
                 # Extract value (skip ": ")
                 let val = ""
                 let v = colon_pos + 1
@@ -83,24 +70,16 @@ proc read_cpuinfo():
                 while v < len(line):
                     if line[v] != " ":
                         break
-                    end
                     v = v + 1
-                end
                 while v < len(line):
                     val = val + line[v]
                     v = v + 1
-                end
                 current_cpu[key] = val
-            end
-        end
         i = i + 1
-    end
     if dict_has(current_cpu, "processor"):
         append(info["processors"], current_cpu)
-    end
     info["count"] = len(info["processors"])
     return info
-end
 
 # Parse /proc/meminfo
 proc read_meminfo():
@@ -115,30 +94,22 @@ proc read_meminfo():
             if line[j] == ":":
                 colon_pos = j
                 break
-            end
             j = j + 1
-        end
         if colon_pos > 0:
             let key = ""
             let k = 0
             while k < colon_pos:
                 key = key + line[k]
                 k = k + 1
-            end
             let val = ""
             let v = colon_pos + 1
             while v < len(line):
                 if line[v] != " ":
                     val = val + line[v]
-                end
                 v = v + 1
-            end
             info[key] = val
-        end
         i = i + 1
-    end
     return info
-end
 
 # Parse /proc/loadavg
 proc read_loadavg():
@@ -155,26 +126,18 @@ proc read_loadavg():
                 part = ""
             else:
                 part = part + line[i]
-            end
             i = i + 1
-        end
         if part != "":
             append(parts, part)
-        end
         if len(parts) >= 3:
             info["load1"] = parts[0]
             info["load5"] = parts[1]
             info["load15"] = parts[2]
-        end
         if len(parts) >= 4:
             info["running_total"] = parts[3]
-        end
         if len(parts) >= 5:
             info["last_pid"] = parts[4]
-        end
-    end
     return info
-end
 
 # Parse /proc/uptime
 proc read_uptime():
@@ -191,21 +154,14 @@ proc read_uptime():
                 part = ""
             else:
                 part = part + line[i]
-            end
             i = i + 1
-        end
         if part != "":
             append(parts, part)
-        end
         if len(parts) >= 1:
             info["uptime"] = parts[0]
-        end
         if len(parts) >= 2:
             info["idle"] = parts[1]
-        end
-    end
     return info
-end
 
 # Parse /proc/version
 proc read_version():
@@ -213,19 +169,15 @@ proc read_version():
     let proc_file = read_proc_file("/proc/version")
     if len(proc_file["lines"]) > 0:
         info["version_string"] = proc_file["lines"][0]
-    end
     return info
-end
 
 # Read /proc/self/status for current process
 proc read_self_status():
     return read_proc_file("/proc/self/status")
-end
 
 # Read /proc/[pid]/status
 proc read_pid_status(pid):
     return read_proc_file("/proc/" + str(pid) + "/status")
-end
 
 # Read /proc/[pid]/cmdline
 proc read_pid_cmdline(pid):
@@ -240,19 +192,14 @@ proc read_pid_cmdline(pid):
         if proc_file["content"][i] == chr(0):
             if arg != "":
                 append(args, arg)
-            end
             arg = ""
         else:
             arg = arg + proc_file["content"][i]
-        end
         i = i + 1
-    end
     if arg != "":
         append(args, arg)
-    end
     info["args"] = args
     return info
-end
 
 # List /proc/[pid] directories (process list)
 proc list_processes():
@@ -260,7 +207,6 @@ proc list_processes():
     # This would use readdir in a real implementation
     # For now return empty — requires native readdir support
     return pids
-end
 
 # ========== /proc entry generators (kernel space) ==========
 
@@ -270,12 +216,10 @@ proc create_proc_entry(name, read_body_lines):
     entry["read_body"] = read_body_lines
     entry["permissions"] = 292
     return entry
-end
 
 proc set_proc_permissions(entry, perms):
     entry["permissions"] = perms
     return entry
-end
 
 proc emit_proc_entry_c(entry):
     let nl = chr(10)
@@ -289,16 +233,13 @@ proc emit_proc_entry_c(entry):
             safe_name = safe_name + "_"
         else:
             safe_name = safe_name + name[i]
-        end
         i = i + 1
-    end
 
     code = code + "static int " + safe_name + "_show(struct seq_file *sf, void *v) {" + nl
     let bi = 0
     while bi < len(entry["read_body"]):
         code = code + "    " + entry["read_body"][bi] + nl
         bi = bi + 1
-    end
     code = code + "    return 0;" + nl
     code = code + "}" + nl + nl
 
@@ -314,4 +255,3 @@ proc emit_proc_entry_c(entry):
     code = code + "};" + nl
 
     return code
-end

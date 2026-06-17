@@ -33,38 +33,31 @@ let F2FS_INLINE_DENTRY = 4
 
 proc _read_u8(bytes, off):
     return bytes[off]
-end
 
 proc _read_u16(bytes, off):
     return bytes[off] + bytes[off + 1] * 256
-end
 
 proc _read_u32(bytes, off):
     return bytes[off] + bytes[off + 1] * 256 + bytes[off + 2] * 65536 + bytes[off + 3] * 16777216
-end
 
 proc _read_u64(bytes, off):
     let lo = _read_u32(bytes, off)
     let hi = _read_u32(bytes, off + 4)
     return lo + hi * 4294967296
-end
 
 proc _write_u16(bytes, off, val):
     bytes[off] = val & 255
     bytes[off + 1] = (val >> 8) & 255
-end
 
 proc _write_u32(bytes, off, val):
     bytes[off] = val & 255
     bytes[off + 1] = (val >> 8) & 255
     bytes[off + 2] = (val >> 16) & 255
     bytes[off + 3] = (val >> 24) & 255
-end
 
 proc _write_u64(bytes, off, val):
     _write_u32(bytes, off, val & 4294967295)
     _write_u32(bytes, off + 4, (val >> 32) & 4294967295)
-end
 
 proc _read_bytes_as_str(bytes, off, length):
     let s = ""
@@ -73,12 +66,9 @@ proc _read_bytes_as_str(bytes, off, length):
         let b = bytes[off + i]
         if b == 0:
             return s
-        end
         s = s + chr(b)
         i = i + 1
-    end
     return s
-end
 
 proc _zero_bytes(count):
     let result = []
@@ -86,9 +76,7 @@ proc _zero_bytes(count):
     while i < count:
         result = result + [0]
         i = i + 1
-    end
     return result
-end
 
 proc _read_block(fs, blkaddr):
     let offset = blkaddr * BLOCK_SIZE
@@ -97,9 +85,7 @@ proc _read_block(fs, blkaddr):
     while i < BLOCK_SIZE:
         result = result + [fs["data"][offset + i]]
         i = i + 1
-    end
     return result
-end
 
 proc parse_superblock(bytes):
     let off = F2FS_SUPER_OFFSET
@@ -133,9 +119,7 @@ proc parse_superblock(bytes):
     sb["meta_ino"] = _read_u32(bytes, off + 104)
     if sb["magic"] != F2FS_MAGIC:
         print("Warning: invalid F2FS magic " + str(sb["magic"]))
-    end
     return sb
-end
 
 proc _get_nat_block_addr(fs, nid):
     let sb = fs["superblock"]
@@ -143,7 +127,6 @@ proc _get_nat_block_addr(fs, nid):
     let entries_per_block = (BLOCK_SIZE / NAT_ENTRY_SIZE) | 0
     let block_off = (nid / entries_per_block) | 0
     return nat_blkaddr + block_off
-end
 
 proc read_nat(fs, nid):
     let sb = fs["superblock"]
@@ -158,7 +141,6 @@ proc read_nat(fs, nid):
     entry["block_addr"] = _read_u32(blk, eoff + 4)
     entry["version"] = _read_u8(blk, eoff + 8)
     return entry
-end
 
 proc _get_sit_block_addr(fs, segno):
     let sb = fs["superblock"]
@@ -166,7 +148,6 @@ proc _get_sit_block_addr(fs, segno):
     let entries_per_block = (BLOCK_SIZE / SIT_ENTRY_SIZE) | 0
     let block_off = (segno / entries_per_block) | 0
     return sit_blkaddr + block_off
-end
 
 proc read_sit(fs, segno):
     let sb = fs["superblock"]
@@ -185,42 +166,32 @@ proc read_sit(fs, segno):
     while i < 64:
         bitmap = bitmap + [blk[eoff + 10 + i]]
         i = i + 1
-    end
     entry["valid_map"] = bitmap
     entry["seg_type"] = _get_seg_type(entry["vblocks"])
     return entry
-end
 
 proc _get_seg_type(vblocks):
     # Upper bits may encode type
     let t = (vblocks >> 10) & 7
     if t == HOT_DATA:
         return "hot_data"
-    end
     if t == WARM_DATA:
         return "warm_data"
-    end
     if t == COLD_DATA:
         return "cold_data"
-    end
     if t == HOT_NODE:
         return "hot_node"
-    end
     if t == WARM_NODE:
         return "warm_node"
-    end
     if t == COLD_NODE:
         return "cold_node"
-    end
     return "unknown"
-end
 
 proc read_inode(fs, nid):
     let nat_entry = read_nat(fs, nid)
     let blkaddr = nat_entry["block_addr"]
     if blkaddr == 0:
         return nil
-    end
     let blk = _read_block(fs, blkaddr)
     let inode = {}
     inode["nid"] = nid
@@ -244,12 +215,10 @@ proc read_inode(fs, nid):
         let addr = _read_u32(blk, 328 + i * 4)
         addrs = addrs + [addr]
         i = i + 1
-    end
     inode["addrs"] = addrs
     inode["has_inline_data"] = (inode["inline_flags"] >> 1) & 1 == 1
     inode["has_inline_dentry"] = (inode["inline_flags"] >> 2) & 1 == 1
     return inode
-end
 
 proc list_dir(fs, inode):
     let entries = []
@@ -264,7 +233,6 @@ proc list_dir(fs, inode):
             let eoff = dentry_off + i * 11
             if eoff + 11 > BLOCK_SIZE:
                 break
-            end
             let hash = _read_u32(blk, eoff)
             let ino = _read_u32(blk, eoff + 4)
             let name_len = _read_u8(blk, eoff + 8)
@@ -272,7 +240,6 @@ proc list_dir(fs, inode):
             if ino == 0:
                 i = i + 1
                 continue
-            end
             let name_off = dentry_off + max_entries * 11 + i * 8
             let name = _read_bytes_as_str(blk, name_off, name_len)
             let entry = {}
@@ -281,9 +248,7 @@ proc list_dir(fs, inode):
             entry["type"] = file_type
             entries = entries + [entry]
             i = i + 1
-        end
         return entries
-    end
     # Read dentry blocks from inode addresses
     let bi = 0
     while bi < len(inode["addrs"]):
@@ -291,7 +256,6 @@ proc list_dir(fs, inode):
         if blkaddr == 0:
             bi = bi + 1
             continue
-        end
         let blk = _read_block(fs, blkaddr)
         # Dentry block: bitmap + dentries + filenames
         let max_entries = 214
@@ -304,7 +268,6 @@ proc list_dir(fs, inode):
             if valid == 0:
                 i = i + 1
                 continue
-            end
             let eoff = bitmap_size + i * 11
             let hash = _read_u32(blk, eoff)
             let ino = _read_u32(blk, eoff + 4)
@@ -318,11 +281,8 @@ proc list_dir(fs, inode):
             entry["type"] = file_type
             entries = entries + [entry]
             i = i + 1
-        end
         bi = bi + 1
-    end
     return entries
-end
 
 proc read_file(fs, inode):
     let size = inode["size"]
@@ -332,27 +292,21 @@ proc read_file(fs, inode):
     while bi < len(inode["addrs"]):
         if remaining <= 0:
             break
-        end
         let blkaddr = inode["addrs"][bi]
         if blkaddr == 0:
             bi = bi + 1
             continue
-        end
         let blk = _read_block(fs, blkaddr)
         let to_copy = BLOCK_SIZE
         if remaining < BLOCK_SIZE:
             to_copy = remaining
-        end
         let j = 0
         while j < to_copy:
             result = result + [blk[j]]
             j = j + 1
-        end
         remaining = remaining - to_copy
         bi = bi + 1
-    end
     return result
-end
 
 proc gc_info(fs):
     let sb = fs["superblock"]
@@ -371,23 +325,17 @@ proc gc_info(fs):
         total_valid = total_valid + vblocks
         if vblocks == 0:
             free_segments = free_segments + 1
-        end
         if vblocks > 0:
             if vblocks < BLOCKS_PER_SEG:
                 dirty_segments = dirty_segments + 1
-            end
-        end
         seg = seg + 1
-    end
     info["total_valid_blocks"] = total_valid
     info["free_segments"] = free_segments
     info["dirty_segments"] = dirty_segments
     info["utilization"] = 0
     if total_segments > 0:
         info["utilization"] = (total_valid * 100) / (total_segments * BLOCKS_PER_SEG)
-    end
     return info
-end
 
 proc _parse_checkpoint(fs):
     let sb = fs["superblock"]
@@ -405,7 +353,6 @@ proc _parse_checkpoint(fs):
     cp["cur_data_segno1"] = _read_u32(blk, 44)
     cp["elapsed_time"] = _read_u64(blk, 48)
     return cp
-end
 
 proc create_f2fs(size_bytes):
     let total_blocks = (size_bytes / BLOCK_SIZE) | 0
@@ -454,4 +401,3 @@ proc create_f2fs(size_bytes):
     fs["data"] = data
     fs["superblock"] = parse_superblock(data)
     return fs
-end

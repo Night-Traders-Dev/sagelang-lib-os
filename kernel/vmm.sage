@@ -30,11 +30,9 @@ let vmm_ready = false
 
 proc page_number(addr):
     return (addr / PAGE_SIZE) | 0
-end
 
 proc page_addr(page_num):
     return page_num * PAGE_SIZE
-end
 
 # ----- Initialize kernel address space -----
 
@@ -46,7 +44,6 @@ proc init():
     kernel_pml4["addr"] = 0
     current_pml4 = kernel_pml4
     vmm_ready = true
-end
 
 # ----- Map a virtual page to a physical page -----
 
@@ -58,7 +55,6 @@ proc map_page(virt, phys, flags):
     let key = str(pn)
     let entries = current_pml4["entries"]
     entries[key] = entry
-end
 
 # ----- Unmap a virtual page -----
 
@@ -68,8 +64,6 @@ proc unmap_page(virt):
     let entries = current_pml4["entries"]
     if dict_has(entries, key):
         dict_delete(entries, key)
-    end
-end
 
 # ----- Map a contiguous region -----
 
@@ -78,8 +72,6 @@ proc map_region(virt, phys, size, flags):
     while offset < size:
         map_page(virt + offset, phys + offset, flags)
         offset = offset + PAGE_SIZE
-    end
-end
 
 # ----- Check if a virtual address is mapped -----
 
@@ -88,7 +80,6 @@ proc is_mapped(virt):
     let key = str(pn)
     let entries = current_pml4["entries"]
     return dict_has(entries, key)
-end
 
 # ----- Translate virtual to physical -----
 
@@ -98,11 +89,9 @@ proc get_physical(virt):
     let entries = current_pml4["entries"]
     if dict_has(entries, key) == false:
         return nil
-    end
     let entry = entries[key]
     let page_offset = virt % PAGE_SIZE
     return entry["phys"] + page_offset
-end
 
 # ----- Create a new address space -----
 
@@ -113,10 +102,8 @@ proc create_address_space():
     let phys_page = pmm.alloc_page()
     if phys_page == nil:
         pml4["addr"] = 0
-    end
     if phys_page != nil:
         pml4["addr"] = phys_page
-    end
     # Copy kernel mappings (upper half) into the new space
     let k_entries = kernel_pml4["entries"]
     let new_entries = pml4["entries"]
@@ -130,28 +117,23 @@ proc create_address_space():
         dst["flags"] = src["flags"]
         new_entries[k] = dst
         i = i + 1
-    end
     return pml4
-end
 
 # ----- Switch address space (set CR3) -----
 
 proc switch_address_space(pml4):
     # In a real kernel: mov cr3, pml4["addr"]
     current_pml4 = pml4
-end
 
 # ----- Get kernel address space -----
 
 proc kernel_address_space():
     return kernel_pml4
-end
 
 # ----- Get current address space -----
 
 proc current_address_space():
     return current_pml4
-end
 
 # ----- Statistics -----
 
@@ -163,7 +145,6 @@ proc stats():
     s["mapped_bytes"] = len(keys) * PAGE_SIZE
     s["pml4_addr"] = current_pml4["addr"]
     return s
-end
 
 # =========================================================================
 # Architecture-Aware VMM Interface
@@ -206,14 +187,12 @@ proc vmm_init(arch):
             entry["flags"] = flags
             entries[str(pn)] = entry
             addr = addr + PAGE_SIZE
-        end
         # Map VGA text buffer
         let vga_pn = page_number(753664)
         let vga_entry = {}
         vga_entry["phys"] = 753664
         vga_entry["flags"] = PAGE_PRESENT + PAGE_WRITABLE
         entries[str(vga_pn)] = vga_entry
-    end
 
     if arch == "aarch64":
         # Identity-map first 4 MB with valid + table + AF + AP_RW
@@ -230,8 +209,6 @@ proc vmm_init(arch):
             entries[key] = entry
             page_tables[key] = entry
             addr = addr + PAGE_SIZE
-        end
-    end
 
     if arch == "riscv64":
         # Identity-map first 4 MB with V + R + W
@@ -248,12 +225,9 @@ proc vmm_init(arch):
             entries[key] = entry
             page_tables[key] = entry
             addr = addr + PAGE_SIZE
-        end
-    end
 
     state["ready"] = true
     return state
-end
 
 # ----- Map a virtual page in an arch-aware VMM state -----
 
@@ -268,16 +242,12 @@ proc vmm_map(state, vaddr, paddr, flags):
     if arch == "x86_64":
         let entries = state["entries"]
         entries[key] = entry
-    end
     if arch == "aarch64":
         let entries = state["entries"]
         entries[key] = entry
-    end
     if arch == "riscv64":
         let entries = state["entries"]
         entries[key] = entry
-    end
-end
 
 # ----- Unmap a virtual page in an arch-aware VMM state -----
 
@@ -290,18 +260,11 @@ proc vmm_unmap(state, vaddr):
         let entries = state["entries"]
         if dict_has(entries, key):
             dict_delete(entries, key)
-        end
-    end
     if arch == "aarch64":
         let entries = state["entries"]
         if dict_has(entries, key):
             dict_delete(entries, key)
-        end
-    end
     if arch == "riscv64":
         let entries = state["entries"]
         if dict_has(entries, key):
             dict_delete(entries, key)
-        end
-    end
-end

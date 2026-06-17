@@ -56,71 +56,51 @@ comptime:
 proc get_assembler(arch):
     if arch == "x86_64":
         return AS_X86
-    end
     if arch == "aarch64":
         return AS_AARCH64
-    end
     if arch == "riscv64":
         return AS_RISCV64
-    end
     return "as"
-end
 
 @inline
 proc get_linker(arch):
     if arch == "x86_64":
         return LD_X86
-    end
     if arch == "aarch64":
         return LD_AARCH64
-    end
     if arch == "riscv64":
         return LD_RISCV64
-    end
     return "ld"
-end
 
 @inline
 proc get_cc(arch):
     if arch == "x86_64":
         return CC_X86
-    end
     if arch == "aarch64":
         return CC_AARCH64
-    end
     if arch == "riscv64":
         return CC_RISCV64
-    end
     return "gcc"
-end
 
 @inline
 proc get_objcopy(arch):
     if arch == "x86_64":
         return OBJCOPY_X86
-    end
     if arch == "aarch64":
         return OBJCOPY_AARCH64
-    end
     if arch == "riscv64":
         return OBJCOPY_RISCV64
-    end
     return "objcopy"
-end
 
 @inline
 proc get_uart_base(arch):
     if arch == "x86_64":
         return UART_X86_BASE
-    end
     if arch == "aarch64":
         return UART_AARCH64_BASE
-    end
     if arch == "riscv64":
         return UART_RISCV64_BASE
-    end
     return 0
-end
 
 # ============================================================================
 # Assembly generation: serial-enabled boot stub + kernel glue
@@ -194,7 +174,6 @@ proc generate_serial_boot_x86():
     asm = asm + "    ret" + NL
     asm = asm + NL
     return asm
-end
 
 proc generate_serial_boot_aarch64():
     let base = "0x09000000"
@@ -244,7 +223,6 @@ proc generate_serial_boot_aarch64():
     asm = asm + "    ret" + NL
     asm = asm + NL
     return asm
-end
 
 proc generate_serial_boot_riscv64():
     let base = "0x10000000"
@@ -303,7 +281,6 @@ proc generate_serial_boot_riscv64():
     asm = asm + "    ret" + NL
     asm = asm + NL
     return asm
-end
 
 # ============================================================================
 # Minimal C kernel template generation
@@ -336,7 +313,6 @@ proc generate_linker_x86_mb1():
     s = s + "    }" + NL
     s = s + "}" + NL
     return s
-end
 
 proc generate_kernel_c(arch, message):
     let c = ""
@@ -351,17 +327,13 @@ proc generate_kernel_c(arch, message):
     c = c + "    while (1) {" + NL
     if arch == "x86_64":
         c = c + "        __asm__ volatile(\"hlt\");" + NL
-    end
     if arch == "aarch64":
         c = c + "        __asm__ volatile(\"wfe\");" + NL
-    end
     if arch == "riscv64":
         c = c + "        __asm__ volatile(\"wfi\");" + NL
-    end
     c = c + "    }" + NL
     c = c + "}" + NL
     return c
-end
 
 # ============================================================================
 # Full build command generation
@@ -382,30 +354,23 @@ proc build_commands(arch, boot_asm_path, kernel_c_path, linker_script_path, outp
     # Step 1: Assemble boot stub
     if arch == "x86_64":
         push(cmds, as_cmd + " --64 -o " + boot_obj + " " + boot_asm_path)
-    end
     if arch == "aarch64":
         push(cmds, as_cmd + " -o " + boot_obj + " " + boot_asm_path)
-    end
     if arch == "riscv64":
         push(cmds, as_cmd + " -march=rv64gc -mabi=lp64d -o " + boot_obj + " " + boot_asm_path)
-    end
 
     # Step 2: Compile kernel C code
     if arch == "x86_64":
         push(cmds, cc + " -ffreestanding -nostdlib -mno-red-zone -c -o " + kernel_obj + " " + kernel_c_path)
-    end
     if arch == "aarch64":
         push(cmds, cc + " -ffreestanding -nostdlib -c -o " + kernel_obj + " " + kernel_c_path)
-    end
     if arch == "riscv64":
         push(cmds, cc + " -ffreestanding -nostdlib -march=rv64gc -mabi=lp64d -c -o " + kernel_obj + " " + kernel_c_path)
-    end
 
     # Step 3: Link into ELF
     push(cmds, ld + " -T " + linker_script_path + " -o " + output_elf + " " + boot_obj + " " + kernel_obj)
 
     return cmds
-end
 
 # Build commands with bare_metal.c runtime linked in (provides memset, memcpy,
 # inb/outb, cli/sti/hlt, rdmsr/wrmsr, invlpg, read_cr3/write_cr3)
@@ -423,22 +388,17 @@ proc build_commands_with_runtime(arch, boot_asm_path, kernel_c_path, linker_scri
     # Step 1: Assemble boot stub
     if arch == "x86_64":
         push(cmds, as_cmd + " --64 -o " + boot_obj + " " + boot_asm_path)
-    end
     if arch == "aarch64":
         push(cmds, as_cmd + " -o " + boot_obj + " " + boot_asm_path)
-    end
     if arch == "riscv64":
         push(cmds, as_cmd + " -march=rv64gc -mabi=lp64d -o " + boot_obj + " " + boot_asm_path)
-    end
 
     # Step 2: Compile kernel C code
     let cflags = " -ffreestanding -nostdlib -DSAGE_BARE_METAL"
     if arch == "x86_64":
         cflags = cflags + " -mno-red-zone"
-    end
     if arch == "riscv64":
         cflags = cflags + " -march=rv64gc -mabi=lp64d"
-    end
     push(cmds, cc + cflags + " -c -o " + kernel_obj + " " + kernel_c_path)
 
     # Step 3: Compile bare_metal.c runtime
@@ -448,7 +408,6 @@ proc build_commands_with_runtime(arch, boot_asm_path, kernel_c_path, linker_scri
     push(cmds, ld + " -T " + linker_script_path + " -o " + output_elf + " " + boot_obj + " " + kernel_obj + " " + runtime_obj)
 
     return cmds
-end
 
 # ============================================================================
 # QEMU launch command generation
@@ -457,19 +416,14 @@ end
 proc qemu_command(arch, kernel_path):
     if arch == "x86_64":
         return "qemu-system-x86_64 -m 128M -display none -serial mon:stdio -kernel " + kernel_path
-    end
     if arch == "aarch64":
         return "qemu-system-aarch64 -machine virt -cpu cortex-a57 -m 128M -display none -serial mon:stdio -kernel " + kernel_path
-    end
     if arch == "riscv64":
         return "qemu-system-riscv64 -machine virt -m 128M -display none -serial mon:stdio -bios none -kernel " + kernel_path
-    end
     return ""
-end
 
 proc qemu_command_debug(arch, kernel_path, gdb_port):
     return qemu_command(arch, kernel_path) + " -s -S -gdb tcp::" + str(gdb_port)
-end
 
 # ============================================================================
 # High-level build pipeline
@@ -483,15 +437,12 @@ proc write_build_files(arch, output_dir, message):
     if arch == "x86_64":
         boot_asm = start.generate_boot_asm(nil)
         boot_asm = boot_asm + generate_serial_boot_x86()
-    end
     if arch == "aarch64":
         boot_asm = start.emit_start_aarch64("kmain", "stack_top")
         boot_asm = boot_asm + generate_serial_boot_aarch64()
-    end
     if arch == "riscv64":
         boot_asm = start.emit_start_riscv64("kmain", "stack_top")
         boot_asm = boot_asm + generate_serial_boot_riscv64()
-    end
 
     # Generate minimal kernel
     let kernel_c = generate_kernel_c(arch, message)
@@ -500,10 +451,8 @@ proc write_build_files(arch, output_dir, message):
     let ld_config = linker.default_config()
     if arch == "aarch64":
         ld_config["base_address"] = 1073741824
-    end
     if arch == "riscv64":
         ld_config["base_address"] = 2147483648
-    end
     let linker_script = linker.generate_script(ld_config)
 
     # Write files
@@ -523,7 +472,6 @@ proc write_build_files(arch, output_dir, message):
     result["build_commands"] = build_commands(arch, boot_path, kernel_path, linker_path, elf_path)
     result["qemu_command"] = qemu_command(arch, elf_path)
     return result
-end
 
 # ============================================================================
 # One-shot build + run script generation
@@ -537,9 +485,7 @@ proc generate_build_script(arch, output_dir, message):
     for cmd in files["build_commands"]:
         script = script + "echo '  " + cmd + "'" + NL
         script = script + cmd + NL
-    end
     script = script + "echo 'Build complete: " + files["output_elf"] + "'" + NL
     script = script + "echo 'Run with:'" + NL
     script = script + "echo '  " + files["qemu_command"] + "'" + NL
     return script
-end
