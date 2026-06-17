@@ -1,29 +1,19 @@
 # os
 
 ## Purpose
-[Describe the purpose of this SageLang library module.]
+Comprehensive library for OS and kernel development, supporting UEFI boot, filesystems, and Linux kernel integration.
 
 ## Features
-- [Feature 1]
-- [Feature 2]
-
-## Installation
-Add as a submodule to your SageLang project:
-```bash
-git submodule add <repository-url> core/lib/os
-```
-
-## API Documentation
-[Link to detailed API documentation]
+- **Boot**: UEFI/BIOS bootloader support.
+- **Filesystems**: FAT, BTRFS, F2FS, CPIO, etc.
+- **Kernel**: Paging, VMM, Syscall management.
+- **Linux**: Linux kernel driver, procfs, netlink support.
 
 ## Usage Example
 ```sage
-import os
-# Example usage...
+import os.vfs
+import os.fat
+
+let fs = os.fat.mount("/dev/sda1")
+os.vfs.list(fs)
 ```
-
-## Contributing
-See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines.
-
-## License
-MIT (or maintain main project license)

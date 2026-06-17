@@ -21,7 +21,7 @@ enum ProcStatus:
     Terminated
 
 let KERNEL_NAME = "SageOS"
-let KERNEL_VERSION = "3.7.9"
+let KERNEL_VERSION = "3.8.0"
 
 proc kernel_version():
     return KERNEL_NAME + " " + KERNEL_VERSION
