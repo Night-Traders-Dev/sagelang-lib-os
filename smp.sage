@@ -12,18 +12,6 @@ import thread
 ## CPU Topology Detection
 ## ============================================================
 
-## Returns the number of logical processors (including hyperthreads)
-proc cpu_count():
-    return cpu_count()
-
-## Returns the number of physical cores (excluding hyperthreads)
-proc physical_cores():
-    return cpu_physical_cores()
-
-## Returns true if hyperthreading (SMT) is detected
-proc has_hyperthreading():
-    return cpu_has_hyperthreading()
-
 ## Returns a dict describing the CPU topology
 proc topology():
     let logical = cpu_count()
@@ -99,12 +87,12 @@ proc parallel_for_cores(items, worker_fn):
     let i = 0
     while i < n:
         let start = i * chunk_size
-        let end = start + chunk_size
+        let endp = start + chunk_size
         if i == n - 1:
-            end = total
+            endp = total
         if start >= total:
             break
-        let slice_items = slice(items, start, end)
+        let slice_items = slice(items, start, endp)
         let t = thread.spawn(worker_fn, i, slice_items)
         push(threads, t)
         i = i + 1
@@ -142,10 +130,8 @@ proc on_all_cores(fn):
 
 ## Send a "task" to a specific core (spawns thread pinned to that core)
 proc send_to_core(core_id, fn):
-    let wrapper = proc(cid, work_fn):
-        pin_to_core(cid)
-        return work_fn()
-    return thread.spawn(wrapper, core_id, fn)
+    pin_to_core(core_id)
+    return fn()
 
 ## ============================================================
 ## CPU Feature Detection Helpers
