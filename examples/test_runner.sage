@@ -90,7 +90,7 @@ proc test_kernel(arch):
     else:
         km = km + "void kmain(void) {" + NL
     km = km + "    serial_init();" + NL
-    km = km + "    serial_puts(\"SageOS Kernel v3.8.1\\n\");" + NL
+    km = km + "    serial_puts(\"SageOS Kernel v3.8.4\\n\");" + NL
     km = km + "    serial_puts(\"Arch: " + arch + "\\n\");" + NL
     km = km + "    serial_puts(\"DONE\\n\");" + NL
     if arch == "x86_64":
@@ -109,7 +109,7 @@ proc test_kernel(arch):
         print "  " + FAIL + " Build failed (exit " + str(rc) + ")"
         return false
 
-    return run_qemu_and_check(result["qemu"], "SageOS Kernel v3.8.1", 5)
+    return run_qemu_and_check(result["qemu"], "SageOS Kernel v3.8.4", 5)
 
 proc test_shell(arch):
     print "--- Testing shell.sage on " + arch + " ---"
