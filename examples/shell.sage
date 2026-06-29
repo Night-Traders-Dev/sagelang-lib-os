@@ -50,7 +50,7 @@ else:
     shell_c = shell_c + "void shell_main(void) {" + NL
 
 shell_c = shell_c + "    serial_init();" + NL
-shell_c = shell_c + "    serial_puts(\"SageOS Shell v3.8.4 " + arch + "\\n\");" + NL
+shell_c = shell_c + "    serial_puts(\"SageOS Shell v3.9.7 " + arch + "\\n\");" + NL
 shell_c = shell_c + "    char cmd[CMD_MAX];" + NL
 shell_c = shell_c + "    while (1) {" + NL
 shell_c = shell_c + "        serial_puts(\"sage@os:~$ \");" + NL
