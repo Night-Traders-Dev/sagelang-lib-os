@@ -482,7 +482,7 @@ proc build_commands(arch, out_dir, boot_asm, kernel_c, ld_script):
 proc run_commands(cmds):
     let rc = 0
     for cmd in cmds:
-        rc = sys.exec(cmd + " 2>&1")
+        rc = sys.exec(cmd)
         if rc != 0:
             return rc
     return 0
