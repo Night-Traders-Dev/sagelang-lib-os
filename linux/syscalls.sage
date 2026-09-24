@@ -173,6 +173,9 @@ let SIGSTOP = 19
 let SIGCONT = 18
 let SIGUSR1 = 10
 let SIGUSR2 = 12
+let SIG_BLOCK = 0
+let SIG_UNBLOCK = 1
+let SIG_SETMASK = 2
 
 # ----- Socket constants -----
 let AF_UNIX = 1
@@ -297,6 +300,9 @@ proc sys_rt_sigaction_desc(sig, act, oact, sigsetsize):
 
 proc sys_rt_sigprocmask_desc(how, set, oset, sigsetsize):
     return make_syscall(ARCH_X86_64, SYS_RT_SIGPROCMASK, [how, set, oset, sigsetsize])
+
+proc sigprocmask(how, set):
+    return sys_rt_sigprocmask_desc(how, set, nil, 8)
 
 ## High-level signal(sig, handler) helper.
 ## Returns a syscall descriptor for rt_sigaction.

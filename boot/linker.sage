@@ -1,5 +1,7 @@
 gc_disable()
 
+import io
+
 # Linker script generation for kernel ELF binaries
 # Produces ld-compatible linker scripts for Multiboot2 and UEFI targets
 
@@ -246,4 +248,4 @@ proc riscv64_default_config():
 
 # --- Write linker script to file ---
 proc write_script(path, script):
-    writefile(path, script)
+    return io.writefile(path, script)
