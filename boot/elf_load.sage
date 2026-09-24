@@ -15,6 +15,7 @@ proc load(src_buf, src_size, relocate):
             # Copy ph["filesz"] bytes from src_buf + ph["offset"]
             # to ph["paddr"] (or ph["vaddr"])
             # ... implementation ...
+            pass
         i = i + 1
     
     return header["entry"]

@@ -128,7 +128,7 @@ proc find_node(bytes, header, path):
                                 found = true
             depth = depth + 1
 
-        else if token == FDT_END_NODE:
+        elif token == FDT_END_NODE:
             depth = depth - 1
             if found:
                 if depth < (len(parts)):
@@ -137,7 +137,7 @@ proc find_node(bytes, header, path):
                 if match_depth > depth:
                     match_depth = depth
 
-        else if token == FDT_PROP:
+        elif token == FDT_PROP:
             let prop_len = read_u32_be(bytes, offset)
             let nameoff = read_u32_be(bytes, offset + 4)
             offset = offset + 8
@@ -151,10 +151,11 @@ proc find_node(bytes, header, path):
                 node["properties"][pname] = pval
             offset = align4(offset + prop_len)
 
-        else if token == FDT_NOP:
+        elif token == FDT_NOP:
             # skip
+            pass
 
-        else if token == FDT_END:
+        elif token == FDT_END:
             break
         else:
             break
@@ -250,20 +251,21 @@ proc find_cpu_count(bytes):
                         cpus_depth = depth
             depth = depth + 1
 
-        else if token == FDT_END_NODE:
+        elif token == FDT_END_NODE:
             depth = depth - 1
             if in_cpus:
                 if depth < cpus_depth:
                     return count
 
-        else if token == FDT_PROP:
+        elif token == FDT_PROP:
             let prop_len = read_u32_be(bytes, offset)
             offset = align4(offset + 8 + prop_len)
 
-        else if token == FDT_NOP:
+        elif token == FDT_NOP:
             # skip
+            pass
 
-        else if token == FDT_END:
+        elif token == FDT_END:
             break
         else:
             break

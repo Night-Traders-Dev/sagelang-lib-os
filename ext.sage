@@ -86,7 +86,7 @@ proc parse_superblock(bytes, offset):
     sb["free_inodes_count"] = _read_u32(bytes, offset + 16)
     sb["first_data_block"] = _read_u32(bytes, offset + 20)
     sb["log_block_size"] = _read_u32(bytes, offset + 24)
-    sb["block_size"] = 1024 * (2 ** sb["log_block_size"])
+    sb["block_size"] = 1024 * (1 << sb["log_block_size"])
     sb["blocks_per_group"] = _read_u32(bytes, offset + 32)
     sb["inodes_per_group"] = _read_u32(bytes, offset + 40)
     sb["magic"] = _read_u16(bytes, offset + 56)
@@ -331,7 +331,7 @@ proc _allocate_block(fs):
                 let byte_idx = (bit / 8) | 0
                 let bit_idx = bit % 8
                 if (bmp[byte_idx] >> bit_idx) & 1 == 0:
-                    bmp[byte_idx] = bmp[byte_idx] + (2 ** bit_idx)
+                    bmp[byte_idx] = bmp[byte_idx] + (1 << bit_idx)
                     let bmp_off = bmp_block * bs
                     let w = 0
                     while w < bs:
@@ -358,7 +358,7 @@ proc _allocate_inode(fs):
                 let byte_idx = (bit / 8) | 0
                 let bit_idx = bit % 8
                 if (bmp[byte_idx] >> bit_idx) & 1 == 0:
-                    bmp[byte_idx] = bmp[byte_idx] + (2 ** bit_idx)
+                    bmp[byte_idx] = bmp[byte_idx] + (1 << bit_idx)
                     let bmp_off = bmp_block * bs
                     let w = 0
                     while w < bs:
