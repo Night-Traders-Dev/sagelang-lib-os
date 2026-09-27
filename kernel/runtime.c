@@ -113,7 +113,10 @@ typedef struct {
     SageValue value;
 } GlobalEntry;
 
-static GlobalEntry sage_globals[256];
+/* Not static: the assembly emitter takes the address of this symbol and
+   passes it as the (ignored) first argument of sage_rt_get_global and
+   sage_rt_set_global, so it must be externally visible to link. */
+GlobalEntry sage_globals[256];
 static int sage_global_count = 0;
 
 SageValue sage_rt_get_global(void* unused, const char* name) {
